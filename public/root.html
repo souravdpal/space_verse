@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Space Welcome Page</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-xxxx" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            background: url("https://images.unsplash.com/photo-1464802686167-b939a6910659") no-repeat center center fixed;
+            background-size: cover;
+            color: #e0e7ff;
+            overflow: hidden;
+        }
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            background: rgba(17, 24, 39, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 1.2s ease-out;
+        }
+        @keyframes progress {
+            0% { width: 0%; box-shadow: 0 0 5px rgba(79, 70, 229, 0.5); }
+            100% { width: 100%; box-shadow: 0 0 20px rgba(79, 70, 229, 1); }
+        }
+        .progress-bar {
+            animation: progress 3s ease-out forwards;
+        }
+        @keyframes rotatePlanet {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-rotate {
+            animation: rotatePlanet 15s linear infinite;
+        }
+        @media (max-width: 640px) {
+            .card-shadow {
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .planet-img {
+                width: 16px;
+                height: 16px;
+            }
+            .progress-container {
+                height: 3px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 relative">
+    <!-- Particle Canvas -->
+    <canvas id="stars"></canvas>
+
+    <!-- Welcome Content -->
+    <div class="content card-shadow rounded-xl p-6 max-w-md w-full text-center animate-fade-in">
+        <h1 class="text-4xl font-bold text-indigo-400 mb-4">Welcome to the Cosmos! 🌌</h1>
+        <img src="https://img.icons8.com/color/96/000000/planet.png" alt="Planet" class="w-20 h-20 mx-auto mb-4 animate-rotate planet-img" />
+        <p id="welcome-message" class="text-gray-300 mb-6 text-lg">Initializing warp drive...</p>
+        <div class="w-full bg-gray-700 rounded-full h-4 progress-container mb-4 overflow-hidden">
+            <div id="progress-bar" class="bg-indigo-400 h-4 rounded-full progress-bar"></div>
+        </div>
+        <div class="animate-pulse text-indigo-400">
+            <i class="fas fa-rocket text-2xl"></i>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration (Updated to latest version compatibility)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3_Otys41HjaAnDG8f2jFuzzuUJTiF-Po",
+            authDomain: "store-work-10c7d.firebaseapp.com",
+            projectId: "store-work-10c7d",
+            storageBucket: "store-work-10c7d.firebasestorage.app",
+            messagingSenderId: "364380068504",
+            appId: "1:364380068504:web:fe303c05a95bb777b6ceed",
+            measurementId: "G-DSG9XHW38R",
+        };
+
+        // Initialize Firebase
+        let auth;
+        let isFirebaseInitialized = false;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            isFirebaseInitialized = true;
+            console.log("Firebase initialized successfully");
+        } catch (error) {
+            console.error("Firebase initialization error:", error.message);
+            document.getElementById("welcome-message").textContent = "Configuration error. Redirecting...";
+            setTimeout(() => window.location.href = "/login", 3000);
+        }
+
+        // Particle Animation
+        const canvas = document.getElementById("stars");
+        const ctx = canvas.getContext("2d");
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener("resize", resizeCanvas);
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 0.3 - 0.15;
+                this.speedY = Math.random() * 0.3 - 0.15;
+                this.life = Math.random() * 100 + 50; // Add life for fading effect
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= 0.5;
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+                if (this.life <= 0) this.reset();
+            }
+            draw() {
+                const opacity = this.life > 0 ? this.life / 100 : 0;
+                ctx.fillStyle = `rgba(224, 231, 255, ${opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.life = 100;
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 150; i++) { // Increased to 150 for better effect
+                particles.push(new Particle());
+            }
+        }
+        initParticles();
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p) => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // User Authentication and Redirect
+        const welcomeMessage = document.getElementById("welcome-message");
+
+        if (isFirebaseInitialized) {
+            auth.onAuthStateChanged((user) => {
+                const userName = localStorage.getItem("user");
+                const userEmail = localStorage.getItem("email");
+                const uid = localStorage.getItem("id");
+
+                if (user && userName && userEmail && uid) {
+                    welcomeMessage.textContent = `Greetings, ${userName}! Warping to your dashboard...`;
+                    setTimeout(() => {
+                        window.location.href = `/view/u/${uid}`;
+                    }, 3000); // 3-second delay
+                } else {
+                    welcomeMessage.textContent = "No astronaut detected. Redirecting to login...";
+                    localStorage.removeItem("user");
+                    localStorage.removeItem("email");
+                    localStorage.removeItem("id");
+                    setTimeout(() => {
+                        window.location.href = "/login";
+                    }, 3000); // 3-second delay
+                }
+            });
+        } else {
+            welcomeMessage.textContent = "Configuration error. Redirecting to login...";
+            localStorage.removeItem("user");
+            localStorage.removeItem("email");
+            localStorage.removeItem("id");
+            setTimeout(() => window.location.href = "/login", 3000);
+        }
+    </script>
+</body>
+</html>

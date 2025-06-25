@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Knowledge Hub - Post</title>
+    <link rel="stylesheet" href="/css/post.css" />
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet" />
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3_Otys41HjaAnDG8f2jFuzzuUJTiF-Po",
+            authDomain: "store-work-10c7d.firebaseapp.com",
+            projectId: "store-work-10c7d",
+            storageBucket: "store-work-10c7d.firebasestorage.app",
+            messagingSenderId: "364380068504",
+            appId: "1:364380068504:web:fe303c05a95bb777b6ceed",
+            measurementId: "G-DSG9XHW38R",
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        .header, .sidebar, .profile-card, .create-post, .post-card {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .header {
+            background: linear-gradient(90deg, #1e293b, #0f172a);
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #a78bfa;
+        }
+        .sidebar a {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #f3f4f6;
+            text-decoration: none;
+        }
+        .sidebar a:hover {
+            background: #4f46e5;
+            color: white;
+        }
+        .profile-card {
+            background: #1e293b;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .create-post {
+            background: #1e293b;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .quill-editor {
+            background: #334155;
+            border-radius: 8px;
+            min-height: 150px;
+            padding: 1rem;
+        }
+        .post-card {
+            background: #1e293b;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .post-actions button:hover {
+            color: #4f46e5;
+        }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Knowledge Hub</h1>
+            <button id="theme-toggle" aria-label="Toggle theme">
+                <i class="ri-sun-line"></i>
+            </button>
+        </header>
+
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <a href="/view/u/<%= id %>" class="active"><i class="ri-home-2-line"></i> Home</a>
+            <a href="/make/u/<%= id %>"><i class="ri-user-settings-line"></i>Creater characters</a>
+            <a href="#" id="logout-btn"><i class="ri-logout-box-line"></i> Log Out</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Profile Section -->
+            <section class="profile-card">
+                <div class="profile-img">
+                    <img src="<%= user.photo || '/default-avatar.png' %>" alt="User Avatar" id="profile-img" />
+                </div>
+                <div class="profile-info">
+                    <h2 id="profile-name"><%= user.name %></h2>
+                    <p id="profile-bio">Bio: <%= user.bio || 'Not set' %></p>
+                    <p id="profile-status">Status: <span class="status-indicator <%= user.status ? user.status.toLowerCase() : '' %>"></span> <%= user.status || 'Offline' %></p>
+                </div>
+            </section>
+
+            <!-- Create Post -->
+            <section class="create-post">
+                <h2>Create a New Post</h2>
+                <div id="editor" class="quill-editor"></div>
+                <div class="post-options">
+                    <select id="community-select">
+                        <option value="General">General</option>
+                        <option value="Space">Space</option>
+                        <option value="Coding">Coding</option>
+                        <option value="Linux">Linux</option>
+                        <option value="Cybersecurity">Cybersecurity</option>
+                        <option value="Characters">Characters</option>
+                    </select>
+                    <button id="post-btn">Post</button>
+                </div>
+            </section>
+
+            <!-- Posts -->
+            <section class="posts">
+                <h2>Explore Posts</h2>
+                <div id="posts-container">
+                    <% posts.forEach(post => { %>
+                        <div class="post-card">
+                            <div class="post-header">
+                                <img src="<%= post.authorPhoto || '/default-avatar.png' %>" alt="Author">
+                                <div>
+                                    <h3><%= post.authorName %></h3>
+                                    <p class="text-sm"><%= new Date(post.createdAt).toLocaleString() %></p>
+                                    <p class="text-sm"><%= post.community %></p>
+                                </div>
+                            </div>
+                            <div class="post-content"><%= post.content %></div>
+                            <div class="post-actions">
+                                <button class="like-btn" data-id="<%= post._id %>" data-liked="<%= post.likedBy.includes(user.uid) %>">
+                                    <i class="ri-heart-line <%= post.likedBy.includes(user.uid) ? 'liked' : '' %>"></i> <%= post.likeCount %>
+                                </button>
+                                <button class="comment-btn" data-id="<%= post._id %>"><i class="ri-chat-3-line"></i> <%= post.commentCount %></button>
+                            </div>
+                            <div class="comments" id="comments-<%= post._id %>">
+                                <% comments[post._id] && comments[post._id].forEach(comment => { %>
+                                    <div class="comment">
+                                        <div class="comment-header">
+                                            <img src="<%= comment.authorPhoto || '/default-avatar.png' %>" alt="Author" style="width: 30px; height: 30px; border-radius: 50%;">
+                                            <div>
+                                                <h4><%= comment.authorName %></h4>
+                                                <p class="text-xs"><%= new Date(comment.createdAt).toLocaleString() %></p>
+                                            </div>
+                                        </div>
+                                        <p><%= comment.content %></p>
+                                        <div class="comment-actions">
+                                            <button class="like-btn" data-id="<%= comment._id %>" data-type="comment" data-liked="<%= comment.likedBy.includes(user.uid) %>">
+                                                <i class="ri-heart-line <%= comment.likedBy.includes(user.uid) ? 'liked' : '' %>"></i> <%= comment.likes %>
+                                            </button>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #4f46e5; color: white; padding: 1rem; border-radius: 8px;"></div>
+
+    <script src="/js/post.js"></script>
+</body>
+</html>

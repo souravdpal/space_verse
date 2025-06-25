@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aiova - Discover</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/dis.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-brand">Aiova - Discover</div>
+        <button class="navbar-toggle"><i class="fas fa-bars"></i></button>
+        <ul class="navbar-nav">
+            <li><a href="/make/u/" class="nav-link" data-target="/make/u/">Create</a></li>
+            <li><a href="/dis/u/" class="nav-link active" data-target="/dis/u/">Discover</a></li>
+            <li><a href="/post/u/" class="nav-link" data-target="/post/u/">Post</a></li>
+            <li><a href="/view/u/" class="nav-link" data-target="/view/u/">Home</a></li>
+        </ul>
+        <div class="navbar-actions">
+            <button id="themeToggle" class="theme-toggle" title="Toggle Theme" aria-label="Toggle between dark and light theme">
+                <i class="fas fa-moon"></i> <!-- Will be updated by JS based on theme -->
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <input
+            type="text"
+            id="searchBox"
+            class="search-bar"
+            placeholder="Search by name or tag..."
+            aria-label="Search for characters or tags"
+        >
+        <div class="grid" id="cardContainer">
+            <!-- Cards will be dynamically populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Modal for Card Details -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" aria-label="Close modal">×</span>
+            <h2 id="modalName"></h2>
+            <p id="modalDetails"></p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/dis.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/not.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="#" class="back-btn" title="Back to Home">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+                Back
+            </a>
+            <h1>Notifications</h1>
+            <div class="header-actions">
+                <button class="theme-toggle" id="theme-toggle" title="Toggle Theme">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="actions">
+            <button class="action-btn mark-all-btn" onclick="markAllAsRead()">Mark All as Read</button>
+            <button class="action-btn clear-all-btn" onclick="clearAllNotifications()">Clear All</button>
+        </div>
+        <div id="notification-list" class="notification-list"></div>
+    </div>
+    <script src="/js/not.js"></script>
+</body>
+</html>

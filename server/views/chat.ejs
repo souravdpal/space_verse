@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat with Character</title>
+  <link rel="stylesheet" href="/css/chat.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body class="dark-theme">
+  <div class="chat-container">
+    <!-- Header -->
+    <div class="chat-header">
+      <div class="header-info">
+        <div class="char-image" id="charImage"></div>
+        <div>
+          <h1>Chat with <span id="charName">...</span></h1>
+          <p id="charMessageName">...</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="themeToggle" class="theme-toggle" title="Toggle Theme">🌙</button>
+        <a href="/" class="back-btn">Back</a>
+      </div>
+    </div>
+
+    <!-- Chat messages -->
+    <div class="chat-messages" id="chatMessages">
+      <!-- Messages will be appended here dynamically -->
+    </div>
+
+    <!-- Chat input bar -->
+    <div class="chat-input">
+      <textarea id="messageInput" rows="1" placeholder="Type your message..."></textarea>
+      <button id="sendMessage" class="send-btn"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <script src="/js/chat.js"></script>
+  <script>// Toggle theme
+document.querySelector('.theme-toggle').addEventListener('click', () => {
+  document.body.classList.toggle('dark-theme');
+});</script>
+</body>
+</html>
