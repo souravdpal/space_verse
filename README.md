@@ -50,9 +50,13 @@ Newton    → Only speak when you’ve discovered gravity, please.
 | **Frontend**      | HTML, CSS, Vanilla JavaScript       |
 | **Backend**       | Node.js, Express, Python            |
 | **AI Engine**     | Custom model (`hina.py`)            |
-| **Data Storage**  | JSON files & SQLite (`memories.db`) |
+| **Data Storage**  | JSON files  (`memories.json`) | 
 | **Routing & API** | RESTful routes (`routes/`)          |
 | **UI Templates**  | EJS views (`views/`)                |
+
+initally using json soon we can use db or cloud!
+
+
 
 Client-side scripts live in `public/js/` (e.g. `chat.js`, `post.js`, `make.js`) and HTML pages (`login.html`, `root.html`) in `public/`.
 
