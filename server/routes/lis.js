@@ -1,25 +1,32 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const express = require("express");
+const fs = require("fs").promises;
+const path = require("path");
+
 const router = express.Router();
 
-router.get('/list', (req, res) => {
-  const id = req.params.id;
-
-  const filePath = path.join(__dirname, 'database', 'list.json');
-
-  // Check if file exists
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ error: 'Character not found' });
-  }
+router.get("/list", async (req, res) => {
+  const listDir = path.join(__dirname, "..", "database");
+  const listFilePath = path.join(listDir, "list.json");
 
   try {
-    const data = fs.readFileSync(filePath, 'utf-8');
-    const json = JSON.parse(data);
-    res.json(json); // ✅ Send the JSON to frontend
+    await fs.mkdir(listDir, { recursive: true });
+    let json;
+    try {
+      await fs.access(listFilePath);
+      json = await fs.readFile(listFilePath, "utf8").then(JSON.parse);
+      if (!Array.isArray(json)) throw new Error("list.json is not an array");
+      // Ensure viewCount exists
+      json = json.map(char => ({ ...char, viewCount: char.viewCount || 0 }));
+    } catch (err) {
+      console.warn(`Creating new list.json: ${err.message}`);
+      json = [];
+      await fs.writeFile(listFilePath, JSON.stringify(json, null, 2));
+    }
+    console.log(`Fetched list.json with ${json.length} characters`);
+    res.json(json);
   } catch (err) {
-    console.error('Failed to read or parse JSON:', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Failed to read or parse list.json:", err);
+    res.status(500).json({ error: "Server error", details: err.message });
   }
 });
 
