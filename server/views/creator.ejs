@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creator Profile</title>
+  <link rel="stylesheet" href="/css/creator.css">
+</head>
+
+<body>
+  <div class="creator-profile">
+    <div class="creator-header">
+      <img src="<%= creator.photo %>" alt="<%= creator.name %>'s avatar">
+      <div>
+        <h1>
+          <%= creator.name %>
+        </h1>
+        <p>
+          <%= creator.bio %>
+        </p>
+        <p id="fl">Followers:
+          <% if (creator.followers>= 1000000) { %>
+            <%= (creator.followers / 1000000).toFixed(1) %>m
+              <% } else if (creator.followers>= 1000) { %>
+                <%= (creator.followers / 1000).toFixed(1) %>k
+                  <% } else { %>
+                    <%= creator.followers %>
+                      <% } %>
+        </p>
+        <button id="fb" class="follow-btn <%= isFollowing ? 'following' : '' %>" data-creator-id="<%= creator.uid %>">
+          <%= isFollowing ? 'Unfollow' : 'Follow' %>
+        </button>
+      </div>
+    </div>
+  </div>
+  <style>
+    #fb {
+      background: linear-gradient(135deg, #FF416C, #FF4B2B);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(255, 65, 108, 0.4);
+
+    }
+
+    #fl {
+      color: aliceblue;
+    }
+  </style>
+  <div class="character-grid">
+    <% characters.forEach(char=> { %>
+      <div class="character-card" data-char-id="<%= char.id %>">
+        <img src="<%= char.link || '/images/fallback.png' %>" alt="<%= char.name %>">
+        <div class="character-card-content">
+          <h3>
+            <%= char.name %>
+          </h3>
+          <p>
+            <%= char.background %>
+          </p>
+          <div class="character-stats">
+            <span class="view-count">
+              <%= char.viewCount || 0 %> Views
+            </span>
+            <span class="chat-count">
+              <%= char.chatCount || 0 %> Chats
+            </span>
+          </div>
+          <button class="like-button <%= char.liked ? 'liked' : '' %>" data-char-id="<%= char.id %>">
+            <span class="like-count">
+              <%= char.likeCount || 0 %>
+            </span>
+          </button>
+        </div>
+      </div>
+      <% }) %>
+  </div>
+
+  <script src="/js/creator.js"></script>
+</body>
+
+</html>

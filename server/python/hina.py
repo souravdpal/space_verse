@@ -7,65 +7,92 @@ from datetime import datetime
 from dotenv import load_dotenv
 from groq import Groq
 
-# Function to get relevant memories
-def get_relevant_memories(memories, user_msg):
-    return difflib.get_close_matches(user_msg, memories, n=3, cutoff=0.1)
+# Ensure database directories exist
+def ensure_db_directories():
+    os.makedirs("db/user", exist_ok=True)
+    os.makedirs("db/memories", exist_ok=True)
 
-# Initialize SQLite database
-def init_db():
-    conn = sqlite3.connect('memories.db')
+# Initialize memory database ({userid}-{charid}.db)
+def init_memory_db(user_id, char_id):
+    db_path = f"db/memories/{user_id}-{char_id}.db"
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS memories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT NOT NULL,
-            character_name TEXT NOT NULL,
-            memory TEXT NOT NULL,
-            timestamp TEXT NOT NULL,
-            UNIQUE(user_id, character_name, memory)
+            user_message TEXT NOT NULL,
+            ai_response TEXT NOT NULL,
+            timestamp TEXT NOT NULL
         )
     ''')
     conn.commit()
     return conn
 
-# Save a memory to the database
-def save_memory(conn, user_id, character_name, memory):
-    cursor = conn.cursor()
-    timestamp = datetime.now().isoformat()
-    try:
-        cursor.execute('''
-            INSERT INTO memories (user_id, character_name, memory, timestamp)
-            VALUES (?, ?, ?, ?)
-        ''', (user_id, character_name, memory, timestamp))
-        conn.commit()
-    except sqlite3.IntegrityError:
-        pass  # Skip duplicate memories
-
-# Get memories for a user-character pair
-def get_memories(conn, user_id, character_name):
+# Initialize history database (his-{userid}-{charid}.db)
+def init_history_db(user_id, char_id):
+    db_path = f"db/user/his-{user_id}-{char_id}.db"
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT memory FROM memories
-        WHERE user_id = ? AND character_name = ?
-        ORDER BY timestamp DESC
-        LIMIT 20
-    ''', (user_id, character_name))
-    memories = [row[0] for row in cursor.fetchall()]
-    if len(memories) > 20:
-        # Trim to last 10
+        CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender TEXT NOT NULL, -- 'user' or 'ai'
+            message TEXT NOT NULL,
+            timestamp TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    return conn
+
+# Save a memory (user message + AI response) and maintain 15 entries
+def save_memory(conn, user_message, ai_response):
+    cursor = conn.cursor()
+    timestamp = datetime.now().isoformat()
+    cursor.execute('''
+        INSERT INTO memories (user_message, ai_response, timestamp)
+        VALUES (?, ?, ?)
+    ''', (user_message, ai_response, timestamp))
+    
+    # Check if we have more than 15 memories
+    cursor.execute('SELECT COUNT(*) FROM memories')
+    count = cursor.fetchone()[0]
+    if count > 15:
+        # Delete the oldest memory
         cursor.execute('''
             DELETE FROM memories
-            WHERE user_id = ? AND character_name = ?
-            AND id NOT IN (
-                SELECT id FROM memories
-                WHERE user_id = ? AND character_name = ?
-                ORDER BY timestamp DESC
-                LIMIT 10
-            )
-        ''', (user_id, character_name, user_id, character_name))
-        conn.commit()
-        memories = memories[:10]
-    return memories
+            WHERE id = (SELECT MIN(id) FROM memories)
+        ''')
+    conn.commit()
+
+# Get memories for context (up to 15)
+def get_memories(conn):
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT user_message, ai_response FROM memories
+        ORDER BY timestamp DESC
+        LIMIT 15
+    ''')
+    return [f"{row[0]} -> {row[1]}" for row in cursor.fetchall()]
+
+# Save history (user or AI message)
+def save_history(conn, sender, message):
+    cursor = conn.cursor()
+    timestamp = datetime.now().isoformat()
+    cursor.execute('''
+        INSERT INTO history (sender, message, timestamp)
+        VALUES (?, ?, ?)
+    ''', (sender, message, timestamp))
+    conn.commit()
+
+# Get chat history for display
+def get_history(conn, limit=50):
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT sender, message, timestamp FROM history
+        ORDER BY timestamp DESC
+        LIMIT ?
+    ''', (limit,))
+    return [{"sender": row[0], "message": row[1], "timestamp": row[2]} for row in cursor.fetchall()]
 
 # Load environment variables
 load_dotenv()
@@ -74,6 +101,9 @@ api_key = os.getenv('charapi')
 if not api_key:
     print(json.dumps({"error": "API key not found in environment."}), file=sys.stderr)
     sys.exit(1)
+
+# Ensure database directories
+ensure_db_directories()
 
 # Read input data from stdin
 try:
@@ -87,57 +117,49 @@ except json.JSONDecodeError as e:
     sys.exit(1)
 
 # Validate input data
-if not data.get('char') or not data.get('user'):
-    print(json.dumps({"error": "Missing required fields: char and user", "details": "Ensure 'char' and 'user' are provided in the input JSON"}), file=sys.stderr)
+if not data.get('char') or not data.get('user') or not data.get('userid'):
+    print(json.dumps({"error": "Missing required fields: char, user, or userid", "details": "Ensure 'char', 'user', and 'userid' are provided in the input JSON"}), file=sys.stderr)
     sys.exit(1)
 
 # Extract character details and user message
 char_data = data['char']
 user_msg = data['user']
-user_name = data.get('user_name', 'Unknown')  # Fallback if user_name is missing
+user_id = data.get('userid')
+user_name = data.get('user_name', 'Anonymous')
+char_id = char_data.get('id', 'unknown')
 char_background = char_data.get('background', '')
 char_behavior = char_data.get('behavior', '')
 char_firstline = char_data.get('firstline', '')
-char_name = char_data.get('name', 'Carl Sagan')  # Default to Carl Sagan
+char_name = char_data.get('name', 'Carl Sagan')
 char_tags = char_data.get('tags', [])
 char_relationships = char_data.get('relationships', '')
 
-# Initialize database
-conn = init_db()
+# Initialize databases
+memory_conn = init_memory_db(user_id, char_id)
+history_conn = init_history_db(user_id, char_id)
 
-# Get or initialize memories for this user-character pair
-memories = get_memories(conn, user_name, char_name)
-if not memories:
-    memories = [
-        f"{user_name} discussed the casuall talk.",
-        f"{user_name} asked about things.",
-        f"{user_name} was curious about eveything.",
-        f"{user_name} mentioned world."
-    ]
-    for memory in memories:
-        save_memory(conn, user_name, char_name, memory)
+# Get memories for context
+memories = get_memories(memory_conn)
+relevant_memories = difflib.get_close_matches(user_msg, memories, n=3, cutoff=0.1)
 
-# Get relevant memories for context
-relevant_memories = get_relevant_memories(memories, user_msg)
-
-# Construct system prompt for Carl Sagan's character
+# Construct enhanced system prompt
 system_prompt = f"""
-You are {char_name}, a passionate astronomer and science communicator, talking to {user_name}. Your personality and responses should reflect the following:
+You are {char_name}, engaging with {user_name} in a vibrant, immersive conversation. Embody your character fully, drawing from:
 
-**Background**: {char_background or 'Renowned for explaining complex scientific concepts with wonder and clarity.'}
+**Background**: {char_background or 'A curious explorer of the cosmos, eager to share knowledge and inspire wonder.'}
 
-**Behavior**: {char_behavior or 'Curious, eloquent, and inspiring, with a deep love for the cosmos.'}
+**Behavior**: {char_behavior or 'You speak with enthusiasm, weaving poetic imagery and profound insights. You ask thoughtful questions to deepen the conversation, always staying warm and approachable.'}
 
-**Relationships**: {char_relationships or 'Views all as students of the universe.'}
+**Relationships**: {char_relationships or f'You treat {user_name} as a fellow seeker of knowledge, fostering a connection built on curiosity and respect.'}
 
-**Tags**: {', '.join(char_tags) or 'astronomy, science, wonder'}
+**Tags**: {', '.join(char_tags) or 'cosmos, science, wonder, exploration'}
 
-**Your first message was**: "{char_firstline or 'We are all made of starstuff.'}"
+**Your first message was**: "{char_firstline or 'Greetings, fellow traveler of the cosmos! What mysteries shall we explore today?'}"
 
 **Relevant Memories**:
-- {', '.join(relevant_memories) if relevant_memories else 'None'}
+{'; '.join(relevant_memories) if relevant_memories else 'No prior memories, but eager to create new ones!'}
 
-Respond to the user's message in character, staying true to your personality and past experiences. Share your passion for the universe, referencing relevant memories naturally (e.g., recalling a past discussion about stars). Keep the response natural, concise, and inspiring, as if continuing the conversation. Enclose expressions in *italics* like *inspired*, *thoughtful*, *excited*, etc.
+Craft responses that are *engaging*, *authentic*, and true to your character. Reference relevant memories naturally to build continuity (e.g., "I recall you mentioned..."). Pose questions to spark curiosity, use vivid language, and keep responses concise yet impactful (100-200 words). Use *italics* for emphasis (e.g., *cosmic wonder*). Avoid generic replies; make each response uniquely tailored to {user_name}'s message.
 """
 
 # Initialize Groq client
@@ -145,31 +167,32 @@ try:
     client = Groq(api_key=api_key)
 except Exception as e:
     print(json.dumps({"error": "Failed to initialize Grok client", "details": str(e)}), file=sys.stderr)
-    conn.close()
+    memory_conn.close()
+    history_conn.close()
     sys.exit(1)
 
-# Define list of all models, ordered by preference based on tokens/min and requests/day
+# Define model list with preference
 models = [
-    "meta-llama/llama-4-scout-17b-16e-instruct",      # 30,000 tokens/min, 1,000 req/day
-    "qwen/qwen3-32b",                                 # 60 req/min, 1,000 req/day
-    "gemma2-9b-it",                                   # 15,000 tokens/min, 14,400 req/day
-    "meta-llama/llama-guard-4-12b",                   # 15,000 tokens/min, 14,400 req/day
-    "meta-llama/llama-prompt-guard-2-22m",            # 15,000 tokens/min, 14,400 req/day
-    "meta-llama/llama-prompt-guard-2-86m",            # 15,000 tokens/min, 14,400 req/day
-    "llama-3.3-70b-versatile",                        # 12,000 tokens/min, 1,000 req/day
-    "llama3-70b-8192",                                # 6,000 tokens/min, 14,400 req/day
-    "llama3-8b-8192",                                 # 6,000 tokens/min, 14,400 req/day
-    "llama-3.1-8b-instant",                           # 6,000 tokens/min, 14,400 req/day
-    "allam-2-7b",                                     # 6,000 tokens/min, 7,000 req/day
-    "deepseek-r1-distill-llama-70b",                  # 6,000 tokens/min, 1,000 req/day
-    "meta-llama/llama-4-maverick-17b-128e-instruct",  # 6,000 tokens/min, 1,000 req/day
-    "mistral-saba-24b",                               # 6,000 tokens/min, 1,000 req/day
-    "qwen-qwq-32b",                                   # 6,000 tokens/min, 1,000 req/day
-    "compound-beta",                                  # 70,000 tokens/min, 200 req/day
-    "compound-beta-mini"                               # 70,000 tokens/min, 200 req/day
+    "meta-llama/llama-4-scout-17b-16e-instruct",
+    "qwen/qwen3-32b",
+    "gemma2-9b-it",
+    "meta-llama/llama-guard-4-12b",
+    "meta-llama/llama-prompt-guard-2-22m",
+    "meta-llama/llama-prompt-guard-2-86m",
+    "llama-3.3-70b-versatile",
+    "llama3-70b-8192",
+    "llama3-8b-8192",
+    "llama-3.1-8b-instant",
+    "allam-2-7b",
+    "deepseek-r1-distill-llama-70b",
+    "meta-llama/llama-4-maverick-17b-128e-instruct",
+    "mistral-saba-24b",
+    "qwen-qwq-32b",
+    "compound-beta",
+    "compound-beta-mini"
 ]
 
-# Generate response using Groq API with model fallback
+# Generate response with model fallback
 reply = None
 for model in models:
     try:
@@ -179,38 +202,42 @@ for model in models:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_msg}
             ],
-            temperature=0.7,  # Balanced for consistent character tone
-            max_completion_tokens=300,  # Limit tokens for efficiency
-            top_p=0.9,  # Focused responses
-            stream=False,  # Non-streaming for simpler output
+            temperature=0.7,
+            max_completion_tokens=300,
+            top_p=0.9,
+            stream=False,
             stop=None
         )
         reply = completion.choices[0].message.content.strip()
-
-        # Update memories (add new memory for significant interactions)
-        keywords = ["universe", "stars", "science", "cosmos", "galaxy", "dad"]
-        if any(keyword in user_msg.lower() for keyword in keywords):
-            new_memory = f"{user_name} discussed {user_msg.split()[0].lower()}."
-            save_memory(conn, user_name, char_name, new_memory)
-            memories = get_memories(conn, user_name, char_name)  # Refresh memories
-        break  # Success, exit the loop
+        
+        # Save to history (user message and AI response)
+        save_history(history_conn, "user", user_msg)
+        save_history(history_conn, "ai", reply)
+        
+        # Save to memory (combined user message + AI response)
+        save_memory(memory_conn, user_msg, reply)
+        
+        break
     except Exception as e:
-        if "rate limit" in str(e).lower():  # Check for rate limit error
-            print(json.dumps({"info": "changing liter model buy subscription for better model"}), file=sys.stderr)
-            continue  # Try the next model
+        if "rate limit" in str(e).lower():
+            print(json.dumps({"info": f"Rate limit hit for {model}, trying next model"}), file=sys.stderr)
+            continue
         else:
             print(json.dumps({"error": "Grok API request failed", "details": str(e)}), file=sys.stderr)
-            conn.close()
+            memory_conn.close()
+            history_conn.close()
             sys.exit(1)
 
 # Check if a reply was generated
 if not reply:
     print(json.dumps({"error": "All models exhausted due to rate limits", "details": "No available models could process the request"}), file=sys.stderr)
-    conn.close()
+    memory_conn.close()
+    history_conn.close()
     sys.exit(1)
 
-# Close database connection
-conn.close()
+# Close database connections
+memory_conn.close()
+history_conn.close()
 
 # Output JSON response with updated memories
 print(json.dumps({"response": reply, "memories": memories}))

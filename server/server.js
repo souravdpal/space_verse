@@ -1,26 +1,32 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const admin = require("firebase-admin");
 const fs = require("fs").promises;
+const glob = require("glob").promise;
 require("dotenv").config();
 const charmake = require("./routes/charmake");
 const lis = require("./routes/lis");
 const idmake = require("./routes/id");
 const pythonRoute = require("./routes/routeai");
+const charmakerRoutes = require("./routes/imageRoute");
+const creatorRoute = require("./routes/creatorroute");
+const sqlite3 = require("sqlite3").verbose();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // JSON File Paths
-const USERS_FILE = path.join(__dirname, "data", "users.json");
-const POSTS_FILE = path.join(__dirname, "data", "posts.json");
-const COMMENTS_FILE = path.join(__dirname, "data", "comments.json");
-
-// Initialize Firebase Admin
-admin.initializeApp({
-  credential: admin.credential.cert(require("./fire.json")),
-});
+const DATA_DIR = path.join(__dirname, "data");
+const DB_DIR = path.join(__dirname, "database");
+const USER_DB_DIR = path.join(__dirname, "db", "user");
+const USERS_FILE = path.join(DATA_DIR, "users.json");
+const POSTS_FILE = path.join(DATA_DIR, "posts.json");
+const COMMENTS_FILE = path.join(DATA_DIR, "comments.json");
+const LIKES_FILE = path.join(DATA_DIR, "char_likes.json");
+const VIEWS_FILE = path.join(DATA_DIR, "char_views.json");
+const FOLLOWS_FILE = path.join(DATA_DIR, "follows.json");
+const LIST_FILE = path.join(DB_DIR, "list.json");
+const CHAR_PERSONA_DIR = path.join(DB_DIR, "charpersona");
 
 // Middleware
 app.use(cors());
@@ -28,13 +34,37 @@ app.use(express.json());
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// Log every request
+// Enhanced request logging middleware
 app.use((req, res, next) => {
-  console.log(`Request: ${req.method} ${req.url}`);
+  const startTime = Date.now();
+  const { method, url, headers, body } = req;
+  console.log(`[${new Date().toISOString()}] Incoming Request:`);
+  console.log(`  Method: ${method}`);
+  console.log(`  URL: ${url}`);
+  console.log(`  Headers:`, {
+    authorization: headers.authorization || 'None',
+    'x-user-id': headers['x-user-id'] || headers['X-User-ID'] || 'None',
+    'user-agent': headers['user-agent'] || 'None',
+  });
+  if (body && typeof body === 'object' && Object.keys(body).length > 0) {
+    console.log(`  Body:`, body);
+  } else {
+    console.log(`  Body: None`);
+  }
+
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    console.log(`[${new Date().toISOString()}] Response:`);
+    console.log(`  Method: ${method}`);
+    console.log(`  URL: ${url}`);
+    console.log(`  Status: ${res.statusCode}`);
+    console.log(`  Duration: ${duration}ms`);
+  });
+
   next();
 });
 
-// Serve static files with route-aware path resolution
+// Serve static files
 app.use(express.static(path.join(__dirname, "..", "public"), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith(".js")) {
@@ -47,25 +77,38 @@ app.use(express.static(path.join(__dirname, "..", "public"), {
   },
 }));
 
-// Initialize JSON Files
+// Initialize JSON Files and Directories
 const initializeFiles = async () => {
   try {
-    const dataDir = path.join(__dirname, "data");
-    await fs.access(dataDir).catch(() => fs.mkdir(dataDir, { recursive: true }));
+    await fs.mkdir(DATA_DIR, { recursive: true }).catch(err => console.error(`Failed to create ${DATA_DIR}:`, err));
+    await fs.mkdir(DB_DIR, { recursive: true }).catch(err => console.error(`Failed to create ${DB_DIR}:`, err));
+    await fs.mkdir(CHAR_PERSONA_DIR, { recursive: true }).catch(err => console.error(`Failed to create ${CHAR_PERSONA_DIR}:`, err));
+    await fs.mkdir(USER_DB_DIR, { recursive: true }).catch(err => console.error(`Failed to create ${USER_DB_DIR}:`, err));
 
-    for (const [file] of [[USERS_FILE], [POSTS_FILE], [COMMENTS_FILE]]) {
+    const files = [USERS_FILE, POSTS_FILE, COMMENTS_FILE, LIKES_FILE, VIEWS_FILE, FOLLOWS_FILE, LIST_FILE];
+    for (const file of files) {
       try {
+        await fs.access(file);
         const content = await fs.readFile(file, "utf8");
         if (!content || content.trim() === "") {
+          console.log(`Initializing empty ${file}`);
           await fs.writeFile(file, JSON.stringify([]));
         } else {
-          JSON.parse(content); // Validate JSON
+          JSON.parse(content);
         }
       } catch (err) {
-        console.log(`Initializing ${file}`);
+        console.log(`Creating ${file}`);
         await fs.writeFile(file, JSON.stringify([]));
       }
     }
+
+    // Ensure list.json entries have viewCount
+    const list = await readJSON(LIST_FILE);
+    const updatedList = list.map(char => ({
+      ...char,
+      viewCount: char.viewCount || 0
+    }));
+    await writeJSON(LIST_FILE, updatedList);
   } catch (err) {
     console.error("Error initializing files:", err);
   }
@@ -75,21 +118,24 @@ initializeFiles();
 // Helper Functions for JSON Operations
 const readJSON = async (filePath) => {
   try {
+    await fs.access(filePath);
     const data = await fs.readFile(filePath, "utf8");
     if (!data || data.trim() === "") {
+      console.log(`File ${filePath} is empty, initializing with empty array`);
       await fs.writeFile(filePath, JSON.stringify([]));
       return [];
     }
     return JSON.parse(data);
   } catch (err) {
     console.error(`Error reading JSON from ${filePath}:`, err);
-    await fs.writeFile(filePath, JSON.stringify([])); // Reset to empty array on error
+    await fs.writeFile(filePath, JSON.stringify([]));
     return [];
   }
 };
 
 const writeJSON = async (filePath, data) => {
   try {
+    console.log(`Writing to ${filePath}:`, data);
     await fs.writeFile(filePath, JSON.stringify(data, null, 2));
   } catch (err) {
     console.error(`Error writing JSON to ${filePath}:`, err);
@@ -97,19 +143,25 @@ const writeJSON = async (filePath, data) => {
   }
 };
 
-// Authentication Middleware
+// Mock Authentication Middleware
 const authMiddleware = async (req, res, next) => {
-  const token = req.headers.authorization?.split("Bearer ")[1];
-  if (!token)
-    return res.status(401).json({ error: "Unauthorized: No token provided" });
-  try {
-    const decoded = await admin.auth().verifyIdToken(token);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    console.error("Auth error:", error);
-    res.status(401).json({ error: "Unauthorized: Invalid token" });
+  console.log(`[${new Date().toISOString()}] Mock Authentication Attempt:`);
+  console.log(`  URL: ${req.url}`);
+  console.log(`  Query:`, req.query);
+  console.log(`  Headers:`, {
+    'x-user-id': req.headers['x-user-id'] || req.headers['X-User-ID'] || 'None',
+  });
+
+  const userId = req.query.uid || req.headers['x-user-id'] || req.headers['X-User-ID'] || 'mock-user-123';
+  if (!userId) {
+    console.error(`[${new Date().toISOString()}] Mock Auth Failed: No user ID provided`);
+    return res.status(401).json({ error: "Unauthorized: No user ID provided" });
   }
+
+  console.log(`[${new Date().toISOString()}] Mock Auth Success:`);
+  console.log(`  User ID: ${userId}`);
+  req.user = { uid: userId };
+  next();
 };
 
 // Fetch user data
@@ -122,6 +174,7 @@ const getUserData = async (uid) => {
       bio: 'Not set',
       status: 'Offline',
       uid: uid,
+      followers: 0,
     };
     return user;
   } catch (error) {
@@ -132,6 +185,7 @@ const getUserData = async (uid) => {
       bio: 'Not set',
       status: 'Offline',
       uid: uid,
+      followers: 0,
     };
   }
 };
@@ -146,6 +200,280 @@ const getPosts = async () => {
     return [];
   }
 };
+
+// Count unique users who interacted with a character
+const getChatInteractionCount = async (charId) => {
+  try {
+    const dbFiles = await glob(path.join(USER_DB_DIR, `his-*-${charId}.db`));
+    return dbFiles.length || 0;
+  } catch (error) {
+    console.error(`Error counting chat interactions for ${charId}:`, error);
+    return 0;
+  }
+};
+
+// Endpoint to handle user follows
+app.post("/api/user/:id/follow", authMiddleware, async (req, res) => {
+  const creatorId = req.params.id;
+  const userId = req.user.uid;
+  console.log(`[${new Date().toISOString()}] Follow Attempt:`);
+  console.log(`  Creator ID: ${creatorId}, User ID: ${userId}`);
+
+  try {
+    const users = await readJSON(USERS_FILE);
+    const creator = users.find((u) => u.uid === creatorId);
+    if (!creator) {
+      console.error(`Creator ${creatorId} not found in users.json`);
+      return res.status(404).json({ error: "Creator not found" });
+    }
+
+    const follows = await readJSON(FOLLOWS_FILE);
+    console.log(`Current follows.json:`, follows);
+    let followRecord = follows.find((f) => f.targetUid === creatorId);
+
+    if (!followRecord) {
+      followRecord = { targetUid: creatorId, followerCount: 0, followers: [] };
+      follows.push(followRecord);
+    }
+
+    const followed = followRecord.followers.includes(userId);
+    if (followed) {
+      followRecord.followers = followRecord.followers.filter(id => id !== userId);
+      followRecord.followerCount = Math.max(0, followRecord.followerCount - 1);
+      console.log(`User ${userId} unfollowed ${creatorId}, new followerCount: ${followRecord.followerCount}`);
+    } else {
+      followRecord.followers.push(userId);
+      followRecord.followerCount++;
+      console.log(`User ${userId} followed ${creatorId}, new followerCount: ${followRecord.followerCount}`);
+    }
+
+    await writeJSON(FOLLOWS_FILE, follows);
+    res.json({
+      followed: !followed,
+      followerCount: followRecord.followerCount
+    });
+  } catch (error) {
+    console.error(`Error toggling follow for ${creatorId} by ${userId}:`, error);
+    res.status(500).json({ error: "Failed to toggle follow", details: error.message });
+  }
+});
+
+// Endpoint to fetch chat history
+app.get('/history', authMiddleware, async (req, res) => {
+  const { user_id, char_id } = req.query;
+  if (!user_id || !char_id) {
+    console.error("Missing user_id or char_id in history request");
+    return res.status(400).json({ error: 'Missing user_id or char_id' });
+  }
+
+  const dbPath = path.join(USER_DB_DIR, `his-${user_id}-${char_id}.db`);
+
+  try {
+    await fs.mkdir(USER_DB_DIR, { recursive: true });
+    const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+      if (err) {
+        console.error(`Error opening history database ${dbPath}:`, err);
+        return res.status(500).json({ error: 'Failed to open history database' });
+      }
+    });
+
+    await new Promise((resolve, reject) => {
+      db.run(`CREATE TABLE IF NOT EXISTS history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sender TEXT,
+        message TEXT,
+        timestamp TEXT
+      )`, (err) => {
+        if (err) {
+          console.error('Error creating history table:', err);
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+
+    const history = await new Promise((resolve, reject) => {
+      db.all('SELECT sender, message, timestamp FROM history ORDER BY timestamp ASC LIMIT 50', [], (err, rows) => {
+        if (err) {
+          console.error('Error querying history:', err);
+          reject(err);
+        } else {
+          resolve(rows.map(row => ({
+            sender: row.sender,
+            message: row.message,
+            timestamp: row.timestamp
+          })));
+        }
+      });
+    });
+
+    db.close((err) => {
+      if (err) console.error('Error closing database:', err);
+    });
+
+    console.log(`Fetched ${history.length} history entries for user ${user_id}, char ${char_id}`);
+    res.json(history);
+  } catch (error) {
+    console.error(`Error fetching history for ${dbPath}:`, error);
+    res.status(500).json({ error: 'Failed to fetch history', details: error.message });
+  }
+});
+
+// Endpoint to handle character likes
+app.post("/api/char/:id/like", authMiddleware, async (req, res) => {
+  const charId = req.params.id;
+  const userId = req.user.uid;
+  try {
+    const likes = await readJSON(LIKES_FILE);
+    let charLike = likes.find((like) => like.charId === charId);
+    
+    if (!charLike) {
+      charLike = { charId, likeCount: 0, likedBy: [] };
+      likes.push(charLike);
+    }
+
+    if (charLike.likedBy.includes(userId)) {
+      charLike.likedBy = charLike.likedBy.filter(id => id !== userId);
+      charLike.likeCount = Math.max(0, charLike.likeCount - 1);
+    } else {
+      charLike.likedBy.push(userId);
+      charLike.likeCount++;
+    }
+
+    await writeJSON(LIKES_FILE, likes);
+    res.json({ likeCount: charLike.likeCount, liked: charLike.likedBy.includes(userId) });
+  } catch (error) {
+    console.error("Error liking character:", error);
+    res.status(500).json({ error: "Failed to like character" });
+  }
+});
+
+// Endpoint to get character like status
+app.get("/api/char/:id/like", authMiddleware, async (req, res) => {
+  const charId = req.params.id;
+  const userId = req.user.uid;
+  try {
+    const likes = await readJSON(LIKES_FILE);
+    const charLike = likes.find((like) => like.charId === charId);
+    
+    if (!charLike) {
+      return res.json({ likeCount: 0, liked: false });
+    }
+
+    res.json({
+      likeCount: charLike.likeCount,
+      liked: charLike.likedBy.includes(userId)
+    });
+  } catch (error) {
+    console.error("Error fetching character like status:", error);
+    res.status(500).json({ error: "Failed to fetch like status" });
+  }
+});
+
+// Chat page with authentication
+app.get("/chat/c/:id", authMiddleware, async (req, res) => {
+  const charId = req.params.id;
+  const userId = req.user.uid;
+
+  try {
+    const list = await readJSON(LIST_FILE);
+    const char = list.find(c => c.id === charId);
+
+    if (!char) {
+      console.error(`Character ${charId} not found in list.json`);
+      return res.status(404).render("error", { message: `Character ${charId} not found` });
+    }
+
+    // Increment view count
+    const views = await readJSON(VIEWS_FILE);
+    if (!views.some(view => view.charId === charId && view.userId === userId)) {
+      views.push({ charId, userId });
+      char.viewCount = (char.viewCount || 0) + 1;
+      await Promise.all([
+        writeJSON(VIEWS_FILE, views),
+        writeJSON(LIST_FILE, list)
+      ]);
+      console.log(`Incremented view count for ${charId} by user ${userId}`);
+    }
+
+    const chatCount = await getChatInteractionCount(charId);
+    res.render("chat", { id: charId, userId, viewCount: char.viewCount, chatCount });
+  } catch (error) {
+    console.error(`Error processing chat page for ${charId}:`, error);
+    res.status(500).json({ error: "Failed to load chat page", details: error.message });
+  }
+});
+
+// Creator works page with authentication
+app.get("/creator/works", authMiddleware, async (req, res) => {
+  const { creatorId } = req.query;
+  if (!creatorId) {
+    console.error("No creatorId provided in query");
+    return res.status(400).json({ error: "No creator ID provided" });
+  }
+  try {
+    console.log(`Fetching creator data for creatorId: ${creatorId}`);
+    const users = await readJSON(USERS_FILE);
+    if (!users) {
+      console.error("Users file is empty or invalid");
+      return res.status(500).json({ error: "Invalid user data" });
+    }
+    const creator = users.find((u) => u.uid === creatorId);
+    if (!creator) {
+      console.error(`Creator ${creatorId} not found`);
+      return res.status(404).json({ error: "Creator not found" });
+    }
+    const list = await readJSON(LIST_FILE);
+    if (!list) {
+      console.error(`Character list file is empty or invalid: ${LIST_FILE}`);
+      return res.status(500).json({ error: "Invalid character list" });
+    }
+    const likes = await readJSON(LIKES_FILE);
+    const views = await readJSON(VIEWS_FILE);
+    const userId = req.user.uid;
+    const characters = await Promise.all(
+      list.filter((char) => char.creatorId === creatorId).map(async (char) => {
+        const charLike = likes.find(like => like.charId === char.id) || { likeCount: 0, likedBy: [] };
+        const viewCount = views.filter(view => view.charId === char.id).length || 0;
+        const chatCount = await getChatInteractionCount(char.id);
+        let background = char.relationships || "No background available";
+        try {
+          const charData = await readJSON(path.join(CHAR_PERSONA_DIR, `${char.id}.json`));
+          background = charData.background || background;
+        } catch (err) {
+          console.warn(`Failed to read persona for ${char.id}: ${err.message}`);
+        }
+        return {
+          ...char,
+          background,
+          likeCount: charLike.likeCount || 0,
+          liked: charLike.likedBy.includes(userId),
+          viewCount: char.viewCount || viewCount,
+          chatCount: chatCount || 0
+        };
+      })
+    );
+    console.log(`Found ${characters.length} characters for creatorId: ${creatorId}`);
+    const follows = await readJSON(FOLLOWS_FILE);
+    const followRecord = follows.find((f) => f.targetUid === creator.uid) || { followerCount: 0, followers: [] };
+    res.render("creator", {
+      creator: {
+        uid: creator.uid || '',
+        name: creator.name || 'Unknown',
+        photo: creator.photo || '/default-avatar.png',
+        bio: creator.bio || "Not set",
+        followers: followRecord.followerCount || 0
+      },
+      characters,
+      userId,
+      isFollowing: followRecord.followers.includes(userId)
+    });
+  } catch (error) {
+    console.error("Error fetching creator works:", error.message, error.stack);
+    res.status(500).json({ error: "Failed to fetch creator works", details: error.message });
+  }
+});
 
 // Fetch comments
 const getComments = async () => {
@@ -168,7 +496,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "login.html"));
+  res.json({ uid: 'mock-user-123', name: 'Mock User', email: 'mock@example.com' });
 });
 
 app.post("/data", async (req, res) => {
@@ -187,6 +515,7 @@ app.post("/data", async (req, res) => {
       photo: photo || `https://api.dicebear.com/9.x/identicon/svg?seed=${encodeURIComponent(display_name)}&backgroundColor=1e1e3a`,
       status: "",
       bio: "",
+      followers: 0,
     };
     users.push(newUser);
     await writeJSON(USERS_FILE, users);
@@ -209,6 +538,7 @@ app.get("/cred", async (req, res) => {
       name: user.name,
       bio: user.bio || "Not set",
       status: user.status || "Offline",
+      followers: user.followers || 0,
     });
   } catch (error) {
     console.error("Error fetching credentials:", error);
@@ -273,7 +603,7 @@ app.post("/api/posts/:id/like", authMiddleware, async (req, res) => {
     if (!post) return res.status(404).json({ error: "Post not found" });
     if (post.likedBy.includes(userId)) {
       post.likedBy = post.likedBy.filter((id) => id !== userId);
-      post.likeCount--;
+      post.likeCount = Math.max(0, post.likeCount - 1);
     } else {
       post.likedBy.push(userId);
       post.likeCount++;
@@ -351,7 +681,7 @@ app.post("/api/comments/:id/like", authMiddleware, async (req, res) => {
     if (!comment) return res.status(404).json({ error: "Comment not found" });
     if (comment.likedBy.includes(userId)) {
       comment.likedBy = comment.likedBy.filter((id) => id !== userId);
-      comment.likes--;
+      comment.likes = Math.max(0, comment.likes - 1);
     } else {
       comment.likedBy.push(userId);
       comment.likes++;
@@ -369,18 +699,11 @@ app.get("/get", (req, res) => {
   res.json(data);
 });
 
-const data = {
-  name: "sourav",
-};
-
-app.get("/chat/c/:id", (req, res) => {
-  const id = req.params.id;
-  res.render("chat", { data, id });
-});
 app.get("/view/u/:id", (req, res) => {
   const id = req.params.id;
   res.render("home", { id });
 });
+
 app.get("/post/u/:id", async (req, res) => {
   const id = req.params.id;
   const user = await getUserData(id);
@@ -388,24 +711,29 @@ app.get("/post/u/:id", async (req, res) => {
   const comments = await getComments();
   res.render("post", { id, user, posts, comments });
 });
+
 app.get("/dis/u/:id", (req, res) => {
   const id = req.params.id;
   res.render("dis", { id });
 });
+
 app.get("/make/u/:id", (req, res) => {
   const id = req.params.id;
   res.render("make", { id });
 });
+
 app.get("/notify/u/:id", (req, res) => {
   const id = req.params.id;
   res.render("not", { id });
 });
 
 // Route Handlers
-app.use("/c", charmake);
-app.use("/c", lis);
 app.use("/c", idmake);
+app.use("/c", lis);
+app.use("/c", charmake);
 app.use("/py", pythonRoute);
+app.use("/", charmakerRoutes);
+app.use("/", creatorRoute);
 
 // Start Server
 app.listen(port, () => {

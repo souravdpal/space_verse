@@ -1,20 +1,73 @@
-// Tag suggestions
 const tagSuggestions = ['@hero', '@villain', '@sidekick', '@mentor', '@rival', '@friend', '@enemy'];
 const tagInput = document.getElementById('charTags');
 const suggestionsContainer = document.getElementById('tagSuggestions');
+const imageUpload = document.getElementById('imageUpload');
+const uploadButton = document.getElementById('uploadImage');
+const imagePreview = document.getElementById('imagePreview');
 
-// Generate random ID (timestamp + random suffix to avoid collisions)
 function generateId() {
     return 'char_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
 }
 
-// Form submission
-document.getElementById('characterForm').addEventListener('submit', function(event) {
-    event.preventDefault();
+// Trigger file input click when upload button is clicked
+uploadButton.addEventListener('click', () => {
+    imageUpload.click();
+});
 
-    // Get input values
+// Handle image upload and preview
+imageUpload.addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagePreview.innerHTML = `
+                <div class="image-preview-container">
+                    <img src="${e.target.result}" alt="Character Preview">
+                    <button type="button" class="remove-image">✖</button>
+                </div>
+            `;
+            // Add event listener for remove button
+            document.querySelector('.remove-image').addEventListener('click', () => {
+                imagePreview.innerHTML = '';
+                imageUpload.value = ''; // Clear file input
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+document.getElementById('characterForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const charId = generateId();
+    
+    // Handle image upload if present
+    let imageUrl = document.getElementById('imageLink').value.trim();
+    if (imageUpload.files[0]) {
+        const formData = new FormData();
+        formData.append('image', imageUpload.files[0], `${charId}.png`);
+        
+        try {
+            const uploadResponse = await fetch(`/char/uploads/${charId}`, {
+                method: 'POST',
+                body: formData
+            });
+            const responseData = await uploadResponse.json();
+            if (uploadResponse.ok && responseData.msg === 'Image uploaded successfully') {
+                imageUrl = responseData.path || `/charimage/uploads/${charId}.png`;
+                console.log('Image uploaded, path:', imageUrl);
+            } else {
+                throw new Error(responseData.error || 'Image upload failed');
+            }
+        } catch (err) {
+            console.error("Image upload error:", err);
+            alert("Failed to upload image: " + err.message);
+            return; // Stop form submission if image upload fails
+        }
+    }
+
     const character = {
-        id: generateId(),
+        id: charId,
         name: document.getElementById('charName').value,
         firstLine: document.getElementById('charFirstLine').value,
         background: document.getElementById('charBackground').value,
@@ -22,51 +75,50 @@ document.getElementById('characterForm').addEventListener('submit', function(eve
         relationships: document.getElementById('charRelationships').value,
         tags: document.getElementById('charTags').value
             .split(' ')
-            .filter(tag => tag.startsWith('@') && tag.length > 1) || [], // Empty array if no valid tags
-        link: document.getElementById('imageLink').value.trim() || undefined // Undefined if empty
+            .filter(tag => tag.startsWith('@') && tag.length > 1) || [],
+        image: imageUrl || undefined,
+        creatorId : localStorage.getItem('id'),
+        creator : localStorage.getItem('username')
+
     };
 
-    // Save to server
-    fetch('/c/char', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(character)
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.msg) {
-            window.location.href = `/chat/c/${character.id}`;
+    try {
+        const charResponse = await fetch('/c/char', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(character)
+        });
+        const charData = await charResponse.json();
+        if (charResponse.ok && charData.msg) {
+            window.location.href = `/chat/c/${charId}`;
         } else {
-            alert("Something went wrong");
+            alert("Something went wrong: " + (charData.error || "Unknown error"));
         }
-    })
-    .catch(err => {
-        console.error("Error:", err);
-        alert("Server error");
-    });
+    } catch (err) {
+        console.error("Character creation error:", err);
+        alert("Server error: " + err.message);
+    }
 });
 
-// Reset form
 document.getElementById('resetForm').addEventListener('click', function() {
     document.getElementById('characterForm').reset();
+    imagePreview.innerHTML = '';
+    imageUpload.value = '';
 });
 
-// Theme toggle
 document.getElementById('themeToggle').addEventListener('click', function() {
     document.body.classList.toggle('dark-theme');
     document.body.classList.toggle('light-theme');
     this.textContent = document.body.classList.contains('dark-theme') ? '🌙' : '☀️';
 });
 
-// Fullscreen toggle
 document.getElementById('fullscreenToggle').addEventListener('click', function() {
     document.querySelector('.container').classList.toggle('fullscreen');
     this.textContent = document.querySelector('.container').classList.contains('fullscreen') ? '🖥️' : '🔲';
 });
 
-// Tag suggestions
 tagInput.addEventListener('input', function() {
     const value = this.value.toLowerCase();
     if (value.includes('@')) {
@@ -90,12 +142,10 @@ function addTag(tag) {
     tagInput.focus();
 }
 
-// Create Image button
 document.getElementById('createImage').addEventListener('click', function() {
     alert('Coming Soon');
 });
 
-// Particle background
 const canvas = document.getElementById('particleCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
