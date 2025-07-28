@@ -1,28 +1,66 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  let mockUserName;
   const charId = window.location.pathname.split("/").pop();
-  const userId = 'mock-user-123'; // Mock user ID
-  const mockUserName = 'Mock User'; // Mock user name for /py/ai
+  const userId = localStorage.getItem('id'); // Mock user ID
+
+  // Fetch user credentials
+  try {
+    const res = await fetch(`/cred?uid=${encodeURIComponent(userId)}`);
+    if (!res.ok) throw new Error(`Failed to fetch user data: ${res.status}`);
+    const data = await res.json();
+    mockUserName = data.name || 'username';
+  } catch (error) {
+    console.error('Error fetching user credentials:', error);
+    alert('Failed to load user data. Redirecting to home.');
+    setTimeout(() => window.location.href = '/', 1000);
+    return;
+  }
+
+  if (!charId || !userId) {
+    console.warn('Missing user or character ID:', { userId, charId, mockUserName });
+    alert('User or character ID missing. Redirecting to home.');
+    setTimeout(() => window.location.href = '/', 1000);
+    return;
+  }
 
   function formatText(text) {
+    if (!text || typeof text !== 'string') {
+      console.warn('Invalid text for formatting:', text);
+      return '';
+    }
     return text
       .replace(/\*\*(.*?)\*\*/g, '<strong class="formatted-bold">$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em class="formatted-italic">$1</em>');
+      .replace(/\*(.*?)\*/g, '<em class="formatted-italic">$1</em>')
+      .replace(/{{user}}/g, mockUserName);
   }
 
   async function chardata() {
     try {
       const headers = { 'X-User-ID': userId };
-      const response = await fetch(`/c/id/?id=${encodeURIComponent(charId)}&uid=${userId}`, { headers });
+      const response = await fetch(`/c/char/${encodeURIComponent(charId)}`, { headers });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
       const data = await response.json();
-      console.log("Character data:", data);
+      console.log("Character data fetched:", data);
+      
+      // Validate character data
       if (!data.id || !data.name) {
-        throw new Error("Incomplete character data returned");
+        throw new Error("Incomplete character data: missing id or name");
       }
-      return data;
+      if (!data.firstLine && !data.firstline) {
+        console.warn("Character firstLine is empty or undefined");
+        data.firstLine = "Hello! I'm here to chat with you.";
+      }
+      return {
+        id: data.id,
+        name: data.name,
+        firstline: data.firstLine || data.firstline,
+        link: data.link || null,
+        creator: data.creator || "Unknown",
+        creatorId: data.creatorId || null
+      };
     } catch (error) {
       console.error("Error fetching character data:", error);
       const errorDiv = document.createElement("div");
@@ -49,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
       const history = await response.json();
-      console.log("Chat history:", history);
+      console.log("Chat history fetched:", history);
       return history;
     } catch (error) {
       console.error("Error fetching history:", error);
@@ -67,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch(`/api/char/${encodeURIComponent(charId)}/like?uid=${userId}`, { headers });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
-      console.log("Like status:", data);
+      console.log("Like status fetched:", data);
       return data;
     } catch (error) {
       console.error("Error fetching like status:", error);
@@ -125,6 +163,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function typeMessage(element, rawText) {
+    if (!element || !rawText) {
+      console.warn("Invalid element or text for typeMessage:", { element, rawText });
+      return;
+    }
     element.innerHTML = '';
     element.classList.add('typing');
 
@@ -159,6 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateScrollButton() {
     const chatMessages = document.getElementById("chatMessages");
     const scrollBtn = document.getElementById("scrollToBottom");
+    if (!chatMessages || !scrollBtn) return;
     if (chatMessages.scrollTop < chatMessages.scrollHeight - chatMessages.clientHeight - 50) {
       scrollBtn.style.display = 'flex';
     } else {
@@ -177,6 +220,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const scrollBtn = document.getElementById("scrollToBottom");
     const likeButton = document.getElementById("likeButton");
     const likeCountElement = document.getElementById("likeCount");
+
+    if (!chatMessages || !charNameElement || !creatorNameElement || !charImage || !likeButton || !likeCountElement) {
+      console.error("Required DOM elements missing:", {
+        chatMessages, charNameElement, creatorNameElement, charImage, likeButton, likeCountElement
+      });
+      alert("Error: Chat interface elements not found. Please check the page structure.");
+      return;
+    }
 
     if (character && character.id && character.name) {
       try {
@@ -210,9 +261,10 @@ document.addEventListener("DOMContentLoaded", () => {
           `;
           chatMessages.appendChild(message);
         });
-        chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        if (!history.length && character.firstline) {
+        // Display firstline only if there is no chat history
+        if (character.firstline && history.length === 0) {
+          console.log("Rendering firstline (new conversation):", character.firstline);
           const firstLineMessage = document.createElement("div");
           firstLineMessage.className = "message message-char";
           firstLineMessage.innerHTML = `
@@ -225,10 +277,19 @@ document.addEventListener("DOMContentLoaded", () => {
           `;
           chatMessages.appendChild(firstLineMessage);
           await typeMessage(firstLineMessage.querySelector(".message-content"), character.firstline);
-          chatMessages.scrollTop = chatMessages.scrollHeight;
+        } else if (history.length > 0) {
+          console.log("Skipping firstline: existing chat history found");
+        } else {
+          console.warn("No firstline provided for character:", character.name);
         }
+
+        chatMessages.scrollTop = chatMessages.scrollHeight;
       } catch (error) {
         console.error("Error rendering chat:", error);
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "error-message text-red-500 p-4";
+        errorDiv.textContent = `Error rendering chat: ${error.message}`;
+        chatMessages.appendChild(errorDiv);
       }
     } else {
       document.title = "Chat with Unknown Character";
@@ -308,7 +369,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             chatMessages.removeChild(typingMessage);
 
-            const aiResponseText = result.response || "Sorry, I couldn’t process that.";
+            let aiResponseText = result.response || "Sorry, I couldn’t process that.";
+            aiResponseText = formatText(aiResponseText);
             const botMessage = document.createElement("div");
             botMessage.className = "message message-char";
             botMessage.innerHTML = `

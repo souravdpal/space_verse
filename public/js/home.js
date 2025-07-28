@@ -77,15 +77,30 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch(`/cred?uid=${encodeURIComponent(id)}`);
       if (!response.ok) throw new Error('Failed to fetch profile');
       const data = await response.json();
+
       if (data.msg === 'none') {
         logout();
         return;
       }
-      const photoUrl = data.photo || `https://api.dicebear.com/9.x/identicon/svg?seed=${currentUser.user}&backgroundColor=1e1e3a`;
+
+      let photoUrl;
+
+      if (typeof data.photo === "string" && data.photo.length > 0) {
+        if (data.photo.startsWith("http://") || data.photo.startsWith("https://")) {
+          photoUrl = data.photo;
+        } else if (data.photo.startsWith("/")) {
+          photoUrl = `/api${data.photo}`;
+        } else {
+          photoUrl = `https://api.dicebear.com/9.x/identicon/svg?seed=${id}&backgroundColor=1e1e3a`;
+        }
+      } else {
+        photoUrl = `https://api.dicebear.com/9.x/identicon/svg?seed=${id}&backgroundColor=1e1e3a`;
+      }
+
       userPhoto.forEach((img) => img.src = photoUrl);
     } catch (error) {
       console.error('Error fetching profile:', error);
-      userPhoto.forEach((img) => img.src = `https://api.dicebear.com/9.x/identicon/svg?seed=${currentUser.user}&backgroundColor=1e1e3a`);
+      userPhoto.forEach((img) => img.src = `https://api.dicebear.com/9.x/identicon/svg?seed=${id}&backgroundColor=1e1e3a`);
     }
   }
 
@@ -118,12 +133,29 @@ document.addEventListener('DOMContentLoaded', () => {
       sidebar.classList.toggle('collapsed');
       localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
       userDropdowns.forEach((dropdown) => dropdown.classList.add('hidden'));
+      // Ensure sidebar remains visible
+      sidebar.style.display = window.innerWidth > 768 ? 'flex' : 'none';
     });
   }
 
-  if (sidebar && localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 768) {
-    sidebar.classList.add('collapsed');
+  // Initialize sidebar state
+  if (sidebar) {
+    if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 768) {
+      sidebar.classList.add('collapsed');
+    }
+    // Ensure sidebar is visible on desktop
+    sidebar.style.display = window.innerWidth > 768 ? 'flex' : 'none';
   }
+
+  // Handle window resize to ensure sidebar visibility
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+      sidebar.style.display = 'flex';
+      mobileNav.classList.remove('open');
+    } else {
+      sidebar.style.display = 'none';
+    }
+  });
 
   if (mobileNavToggle && mobileNav && mobileNavClose) {
     mobileNavToggle.addEventListener('click', () => {
@@ -219,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         authorId: post.authorId,
         community: post.community,
         content: post.content,
+        image: post.image || null,
         likes: post.likeCount,
         likedBy: post.likedBy || [],
         commentCount: post.commentCount,
@@ -334,9 +367,9 @@ document.addEventListener('DOMContentLoaded', () => {
     postDiv.className = 'post-card';
     const areCommentsVisible = commentVisibility.get(post.id) || false;
     postDiv.innerHTML = `
-      <div class="flex items-start gap-3">
+      <div class="flex items-start gap-4">
         <div class="profile-img">
-          <img src="${post.photo}" alt="Profile">
+          <img src="${post.photo}" alt="${post.user}'s profile image">
         </div>
         <div class="flex-grow">
           <div class="flex items-center gap-2 mb-1">
@@ -344,6 +377,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="text-gray-500 text-xs capitalize bg-gray-700 px-2 py-0.5 rounded-full">${post.community}</span>
           </div>
           <p class="text-gray-200 text-sm mb-2">${post.content}</p>
+          ${post.image ? `
+            <div class="post-image-container">
+              <img src="${post.image}" alt="Post image" class="post-image">
+            </div>
+          ` : ''}
           <div class="flex gap-3 mb-3">
             <button class="like-btn flex items-center gap-1 text-gray-400 text-sm ${post.likedBy.includes(currentUser.id) ? 'liked' : ''}" data-id="${post.id}" data-tooltip="Like">
               <i class="fas fa-heart"></i>
@@ -353,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <i class="fas fa-comment"></i>
               <span>${post.commentCount}</span>
             </button>
-            <button class="share-btn flex items-center gap-1 text-gray-400 text-sm" data-id="${post.id}" data-tooltip="Share">
+            <button class="share-btn flex items-center gap-1 text-gray-400 text-sm" data-id="share?uid=${localStorage.getItem('id')}&post=${post.id}" data-tooltip="Share">
               <i class="fas fa-share"></i>
               <span>Share</span>
             </button>
@@ -439,7 +477,8 @@ document.addEventListener('DOMContentLoaded', () => {
               },
               body: JSON.stringify({
                 postid: post.id,
-                content
+                content,
+                authorId: currentUser.id
               })
             });
             if (!response.ok) {
@@ -450,10 +489,11 @@ document.addEventListener('DOMContentLoaded', () => {
               throw new Error('Failed to add comment');
             }
             const data = await response.json();
+            const currentUserProfile = await fetchProfileData(currentUser.id);
             const newComment = {
               id: data.comment._id,
               user: currentUser.user,
-              photo: userPhoto[0].src,
+              photo: currentUserProfile?.photo || `https://api.dicebear.com/9.x/identicon/svg?seed=${currentUser.user}&backgroundColor=1e1e3a`,
               content,
               likes: 0,
               likedBy: [],
@@ -477,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const shareBtn = postDiv.querySelector('.share-btn');
     shareBtn.addEventListener('click', () => {
-      const url = `${window.location.origin}/post/${post.id}`;
+      const url = `${window.location.origin}/post/share?uid=${localStorage.getItem("id")}&post=${post.id}`;
       const shareModal = document.createElement('div');
       shareModal.className = 'share-modal';
       shareModal.innerHTML = `
@@ -548,7 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
     commentDiv.innerHTML = `
       <div class="flex items-start gap-3">
         <div class="profile-img">
-          <img src="${comment.photo}" alt="Profile">
+          <img src="${comment.photo}" alt="${comment.user}'s profile image">
         </div>
         <div class="flex-grow">
           <div class="flex items-center gap-2 mb-1">
@@ -687,6 +727,7 @@ document.addEventListener('DOMContentLoaded', () => {
           authorId: newPost.authorId,
           community: newPost.community,
           content: newPost.content,
+          image: newPost.image || null,
           likes: newPost.likeCount,
           likedBy: newPost.likedBy || [],
           commentCount: newPost.commentCount,
@@ -769,7 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return new Date(date).toLocaleDateString();
   }
 
-  window.markAsRead = function(id) {
+  window.markAsRead = function (id) {
     const notification = notifications.find(n => n.id === id);
     if (notification) {
       notification.read = true;
@@ -779,21 +820,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  window.deleteNotification = function(id) {
+  window.deleteNotification = function (id) {
     notifications = notifications.filter(n => n.id !== id);
     localStorage.setItem('notifications', JSON.stringify(notifications));
     renderNotifications();
     updateNotificationCount();
   };
 
-  window.markAllAsRead = function() {
+  window.markAllAsRead = function () {
     notifications.forEach(n => n.read = true);
     localStorage.setItem('notifications', JSON.stringify(notifications));
     renderNotifications();
     updateNotificationCount();
   };
 
-  window.clearAllNotifications = function() {
+  window.clearAllNotifications = function () {
     notifications = [];
     localStorage.setItem('notifications', JSON.stringify(notifications));
     renderNotifications();
@@ -804,7 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function showToast(msg) {
     const toast = document.createElement('div');
     toast.innerText = msg;
-    toast.className = 'fixed bottom-5 right-5 bg-blue-600 text-white px-4 py-2 rounded shadow';
+    toast.className = 'toast';
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   }
@@ -824,7 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   createPostBtn.forEach(btn => btn.addEventListener('click', (e) => {
     e.preventDefault();
-    window.location.href='post.html';
+    window.location.href = 'post.html';
     mobileNav.classList.remove('open');
     userDropdowns.forEach(dropdown => dropdown.classList.add('hidden'));
   }));

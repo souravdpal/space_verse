@@ -1,419 +1,450 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AIOVA</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Orbitron:wght@700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <link rel="stylesheet" href="/css/home.css" />
-    <style>
-      .logout-popup {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.6);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-      }
 
-      .logout-popup-content {
-        background: #1f2937;
-        color: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        text-align: center;
-        max-width: 300px;
-        width: 90%;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AIOVA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Orbitron:wght@700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="/css/home.css" />
+  <style>
+    .logout-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
 
-      .logout-message {
-        margin-bottom: 1rem;
-        font-size: 1rem;
-      }
+    .logout-popup-content {
+      background: #1f2937;
+      color: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 300px;
+      width: 90%;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    }
 
-      .logout-buttons {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-top: 1rem;
-      }
+    .logout-message {
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
 
-      .logout-confirm,
-      .logout-cancel {
-        flex: 1;
-        padding: 0.5rem;
-        border: none;
-        border-radius: 6px;
-        font-weight: bold;
-        cursor: pointer;
-      }
+    .logout-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
 
-      .logout-confirm {
-        background-color: #ef4444;
-        color: white;
-      }
+    .logout-confirm,
+    .logout-cancel {
+      flex: 1;
+      padding: 0.5rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-      .logout-cancel {
-        background-color: #374151;
-        color: white;
-      }
+    .logout-confirm {
+      background-color: #ef4444;
+      color: white;
+    }
 
-      .user-dropdown {
-        display: none;
-        position: absolute;
-        background: #1f2937;
-        padding: 0.5rem;
-        border-radius: 6px;
-        z-index: 1000;
-      }
+    .logout-cancel {
+      background-color: #374151;
+      color: white;
+    }
 
-      .user-dropdown button {
-        width: 100%;
-        padding: 0.5rem;
-        background: none;
-        color: white;
-        border: none;
-        text-align: left;
-        cursor: pointer;
-      }
+    .user-dropdown {
+      display: none;
+      position: absolute;
+      background: #1f2937;
+      padding: 0.5rem;
+      border-radius: 6px;
+      z-index: 1000;
+    }
 
-      .user-dropdown button:hover {
-        background: #374151;
-      }
+    .user-dropdown button {
+      width: 100%;
+      padding: 0.5rem;
+      background: none;
+      color: white;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+    }
 
-      .hidden {
-        display: none !important;
-      }
-    </style>
-  </head>
+    .user-dropdown button:hover {
+      background: #374151;
+    }
 
-  <body class="dark-mode">
-    <!-- Hamburger Menu for Mobile -->
-    <button id="mobile-nav-toggle" class="mobile-nav-toggle">
-      <i class="fas fa-bars"></i>
-    </button>
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
 
-    <!-- Mobile Navigation Overlay -->
-    <nav id="mobile-nav" class="mobile-nav hidden">
-      <div class="mobile-nav-content">
-        <button id="mobile-nav-close" class="mobile-nav-close">
-          <i class="fas fa-times"></i>
-        </button>
-        <h1 class="font-orbitron">Aiova</h1>
-        <ul>
-          <li>
-            <a href="#" onclick="navigateHome()">
-              <i class="fas fa-home"></i>
-              <span>Home</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" id="mobile-community-nav">
-              <i class="fas fa-users"></i>
-              <span>Communities</span>
-            </a>
-            <ul id="mobile-community-dropdown" class="hidden">
-              <li><a href="#" data-filter="all">All</a></li>
-              <li><a href="#" data-filter="space">Space</a></li>
-              <li><a href="#" data-filter="coding">Coding</a></li>
-              <li><a href="#" data-filter="linux">Linux</a></li>
-              <li><a href="#" data-filter="cybersecurity">Cybersecurity</a></li>
-              <li><a href="#" onclick="navigateCharacters()" data-filter="characters">Characters</a></li>
-            </ul>
-          </li>
-          <li>
-            <a href="#" onclick="postpop()" id="mobile-create-post">
-              <i class="fas fa-plus-circle"></i>
-              <span>Create Post</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" onclick="openNotifications()">
-              <i class="fas fa-bell"></i>
-              <span>Notifications</span>
-              <span class="notification-counter">3</span>
-            </a>
-          </li>
-          <li>
-            <button id="mobile-mode-toggle">
-              <i class="fas fa-moon"></i>
-              <span>Dark Mode</span>
-            </button>
-          </li>
-        </ul>
-        <div class="user-avatar">
-          <img src="https://via.placeholder.com/32" alt="User Photo" />
-          <div class="user-dropdown hidden">
-            <button onclick="showLogoutPopup()">Log Out</button>
-          </div>
-        </div>
-      </div>
-    </nav>
+<body class="dark-mode">
+  <!-- Hamburger Menu for Mobile -->
+  <button id="mobile-nav-toggle" class="mobile-nav-toggle">
+    <i class="fas fa-bars"></i>
+  </button>
 
-    <!-- Sidebar for Desktop -->
-    <nav class="sidebar">
-      <div class="sidebar-header">
-        <h1 class="font-orbitron">Aiova</h1>
-        <button class="sidebar-toggle" id="sidebar-toggle">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="sidebar-content">
-        <ul>
-          <li>
-            <a href="#" onclick="navigateHome()">
-              <i class="fas fa-home"></i>
-              <span>Home</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" id="desktop-community-nav">
-              <i class="fas fa-users"></i>
-              <span>Communities</span>
-            </a>
-            <ul id="desktop-community-dropdown" class="hidden">
-              <li><a href="#" data-filter="all">All</a></li>
-              <li><a href="#" data-filter="space">Space</a></li>
-              <li><a href="#" data-filter="coding">Coding</a></li>
-              <li><a href="#" data-filter="linux">Linux</a></li>
-              <li><a href="#" data-filter="cybersecurity">Cybersecurity</a></li>
-              <li><a href="#" onclick="navigateCharacters()" data-filter="characters">Characters</a></li>
-            </ul>
-          </li>
-          <li>
-            <a href="#" onclick="postpop()" id="desktop-create-post">
-              <i class="fas fa-plus-circle"></i>
-              <span>Create Post</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" onclick="openNotifications()">
-              <i class="fas fa-bell"></i>
-              <span>Notifications</span>
-              <span class="notification-counter">3</span>
-            </a>
-          </li>
-          <li>
-            <button id="desktop-mode-toggle">
-              <i class="fas fa-moon"></i>
-              <span>Dark Mode</span>
-            </button>
-          </li>
-        </ul>
-      </div>
+  <!-- Mobile Navigation Overlay -->
+  <nav id="mobile-nav" class="mobile-nav hidden">
+    <div class="mobile-nav-content">
+      <button id="mobile-nav-close" class="mobile-nav-close">
+        <i class="fas fa-times"></i>
+      </button>
+      <h1 class="font-orbitron">Aiova</h1>
+      <ul>
+        <li>
+          <a href="#" onclick="navigateHome()">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="mobile-community-nav">
+            <i class="fas fa-users"></i>
+            <span>Communities</span>
+          </a>
+          <ul id="mobile-community-dropdown" class="hidden">
+            <li><a href="#" data-filter="all">All</a></li>
+            <li><a href="#" data-filter="space">Space</a></li>
+            <li><a href="#" data-filter="coding">Coding</a></li>
+            <li><a href="#" data-filter="linux">Linux</a></li>
+            <li><a href="#" data-filter="cybersecurity">Cybersecurity</a></li>
+            <li><a href="#" onclick="navigateCharacters()" data-filter="characters">Characters</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#" onclick="postpop()" id="mobile-create-post">
+            <i class="fas fa-plus-circle"></i>
+            <span>Create Post</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="openNotifications()">
+            <i class="fas fa-bell"></i>
+            <span>Notifications</span>
+            <span class="notification-counter">3</span>
+          </a>
+        </li>
+        <li>
+          <button id="mobile-mode-toggle">
+            <i class="fas fa-moon"></i>
+            <span>Dark Mode</span>
+          </button>
+        </li>
+      </ul>
       <div class="user-avatar">
-        <img id="user-photo" src="https://via.placeholder.com/32" alt="User Photo" />
+        <img src="https://via.placeholder.com/32" alt="User Photo" />
         <div class="user-dropdown hidden">
           <button onclick="showLogoutPopup()">Log Out</button>
         </div>
       </div>
-    </nav>
+    </div>
+  </nav>
 
-    <!-- Main Content -->
-    <main>
-      <h2 class="font-orbitron">Aiova</h2>
-      <input
-        type="text"
-        id="search-bar"
-        placeholder="Search posts or characters..."
-      />
-      <div id="post-feed">
-        <div id="loader" class="loader">
-          <span>Loading posts...</span>
-        </div>
-      </div>
-    </main>
-
-    <!-- Logout Popup -->
-    <div id="logout-popup" class="logout-popup">
-      <div class="logout-popup-content">
-        <p class="logout-message">Are you sure you want to log out?</p>
-        <div class="logout-buttons">
-          <button id="confirm-logout" class="logout-confirm">Yes, Log Out</button>
-          <button id="cancel-logout" class="logout-cancel">Cancel</button>
-        </div>
+  <!-- Sidebar for Desktop -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h1 class="font-orbitron">Aiova</h1>
+      <button class="sidebar-toggle" id="sidebar-toggle">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="sidebar-content">
+      <ul>
+        <li>
+          <a href="#" onclick="navigateHome()">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="desktop-community-nav">
+            <i class="fas fa-users"></i>
+            <span>Communities</span>
+          </a>
+          <ul id="desktop-community-dropdown" class="hidden">
+            <li><a href="#" data-filter="all">All</a></li>
+            <li><a href="#" data-filter="space">Space</a></li>
+            <li><a href="#" data-filter="coding">Coding</a></li>
+            <li><a href="#" data-filter="linux">Linux</a></li>
+            <li><a href="#" data-filter="cybersecurity">Cybersecurity</a></li>
+            <li><a href="#" onclick="navigateCharacters()" data-filter="characters">Characters</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#" onclick="postpop()" id="desktop-create-post">
+            <i class="fas fa-plus-circle"></i>
+            <span>Create Post</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="openNotifications()">
+            <i class="fas fa-bell"></i>
+            <span>Notifications</span>
+            <span class="notification-counter">3</span>
+          </a>
+        </li>
+        
+      </ul>
+    </div>
+    <div class="user-avatar">
+      <img id="user-photo" src="https://via.placeholder.com/32" alt="User Photo" />
+      <div class="user-dropdown hidden">
+        <button onclick="showLogoutPopup()">Log Out</button>
       </div>
     </div>
+  </nav>
 
-    <!-- Post Creation Popup -->
-    <div id="post-popup" class="logout-popup hidden">
-      <div class="logout-popup-content">
-        <button id="close-post-popup" onclick="closePostPopup()">X</button>
-        <div id="post-popup-inner"></div>
+  <!-- Main Content -->
+  <main>
+    <h2 class="font-orbitron">Aiova</h2>
+    <input type="text" id="search-bar" placeholder="Search posts or characters..." />
+    <style>
+      .loader {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 80px;
+        width: 100%;
+        margin: 20px 0;
+      }
+
+      .loader::before {
+        content: '';
+        width: 48px;
+        height: 48px;
+        border: 6px solid #3b82f6;
+        /* Blue-600 */
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite, pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes pulse {
+
+        0%,
+        100% {
+          opacity: 0.6;
+        }
+
+        50% {
+          opacity: 1;
+        }
+      }
+    </style>
+    <div id="post-feed">
+      <div id="loader" class="loader">
+        <span>Loading posts...</span>
       </div>
     </div>
+  </main>
 
-    <!-- Firebase and App Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
-    <script>
-      // Firebase Configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyA3_Otys41HjaAnDG8f2jFuzzuUJTiF-Po",
-        authDomain: "store-work-10c7d.firebaseapp.com",
-        projectId: "store-work-10c7d",
-        storageBucket: "store-work-10c7d.firebasestorage.app",
-        messagingSenderId: "364380068504",
-        appId: "1:364380068504:web:fe303c05a95bb777b6ceed",
-        measurementId: "G-DSG9XHW38R",
-      };
-      firebase.initializeApp(firebaseConfig);
+  <!-- Logout Popup -->
+  <div id="logout-popup" class="logout-popup">
+    <div class="logout-popup-content">
+      <p class="logout-message">Are you sure you want to log out?</p>
+      <div class="logout-buttons">
+        <button id="confirm-logout" class="logout-confirm">Yes, Log Out</button>
+        <button id="cancel-logout" class="logout-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
 
-      // Navigation Functions
-      function navigateHome() {
-        setTimeout(() => {
-          const id = localStorage.getItem("id");
-          if (id) {
-            window.location.href = `/view/u/${encodeURIComponent(id)}`;
-          }
-        }, 1000);
-      }
+  <!-- Post Creation Popup -->
+  <div id="post-popup" class="logout-popup hidden">
+    <div class="logout-popup-content">
+      <button id="close-post-popup" onclick="closePostPopup()">X</button>
+      <div id="post-popup-inner"></div>
+    </div>
+  </div>
 
-      function navigateCharacters() {
-        setTimeout(() => {
-          const id = localStorage.getItem("id");
-          if (id) {
-            window.location.href = `/dis/u/${encodeURIComponent(id)}`;
-          }
-        }, 1000);
-      }
+  <!-- Firebase and App Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA3_Otys41HjaAnDG8f2jFuzzuUJTiF-Po",
+      authDomain: "store-work-10c7d.firebaseapp.com",
+      projectId: "store-work-10c7d",
+      storageBucket: "store-work-10c7d.firebasestorage.app",
+      messagingSenderId: "364380068504",
+      appId: "1:364380068504:web:fe303c05a95bb777b6ceed",
+      measurementId: "G-DSG9XHW38R",
+    };
+    firebase.initializeApp(firebaseConfig);
 
-      function openNotifications() {
-       setTimeout(() => {
-          const id = localStorage.getItem("id");
-          if (id) {
-            window.location.href = `/notify/u/${encodeURIComponent(id)}`;
-          }
-        }, 1000);
-      }
+    // Navigation Functions
+    function navigateHome() {
+      setTimeout(() => {
+        const id = localStorage.getItem("id");
+        if (id) {
+          window.location.href = `/view/u/${encodeURIComponent(id)}`;
+        }
+      }, 1000);
+    }
 
-      // Popup Functions
-      function showLogoutPopup() {
-        document.getElementById('logout-popup').style.display = 'flex';
-        hideAllDropdowns();
-      }
+    function navigateCharacters() {
+      setTimeout(() => {
+        const id = localStorage.getItem("id");
+        if (id) {
+          window.location.href = `/dis/u/${encodeURIComponent(id)}`;
+        }
+      }, 1000);
+    }
 
-      function postpop(){
-        setTimeout(() => {
-          const id = localStorage.getItem("id");
-          if (id) {
-            window.location.href = `/post/u/${encodeURIComponent(id)}`;
-          }
-        }, 1000);
+    function openNotifications() {
+      setTimeout(() => {
+        const id = localStorage.getItem("id");
+        if (id) {
+          window.location.href = `/notify/u/${encodeURIComponent(id)}`;
+        }
+      }, 1000);
+    }
 
-      }
+    // Popup Functions
+    function showLogoutPopup() {
+      document.getElementById('logout-popup').style.display = 'flex';
+      hideAllDropdowns();
+    }
 
-      // Logout Function
-      function logout() {
-        firebase.auth().signOut()
-          .then(() => {
-            console.log('User logged out');
-            localStorage.clear();
-            window.location.href = '/login.html';
-          })
-          .catch(error => {
-            console.error('Logout failed:', error);
-          });
-      }
+    function postpop() {
+      setTimeout(() => {
+        const id = localStorage.getItem("id");
+        if (id) {
+          window.location.href = `/post/u/${encodeURIComponent(id)}`;
+        }
+      }, 1000);
 
-      // Dropdown and Menu Toggles
-      function hideAllDropdowns() {
-        document.querySelectorAll('.user-dropdown').forEach(dd => dd.classList.add('hidden'));
-        document.querySelectorAll('#mobile-community-dropdown, #desktop-community-dropdown')
-          .forEach(dd => dd.classList.add('hidden'));
-      }
+    }
 
-      // Event Listeners
-      document.addEventListener('DOMContentLoaded', () => {
-        // Mobile Nav Toggle
-        const mobileNavToggle = document.getElementById('mobile-nav-toggle');
-        const mobileNav = document.getElementById('mobile-nav');
-        const mobileNavClose = document.getElementById('mobile-nav-close');
-
-        mobileNavToggle.addEventListener('click', () => {
-          mobileNav.classList.toggle('hidden');
+    // Logout Function
+    function logout() {
+      firebase.auth().signOut()
+        .then(() => {
+          console.log('User logged out');
+          localStorage.clear();
+          window.location.href = '/login.html';
+        })
+        .catch(error => {
+          console.error('Logout failed:', error);
         });
+    }
 
-        mobileNavClose.addEventListener('click', () => {
-          mobileNav.classList.add('hidden');
-        });
+    // Dropdown and Menu Toggles
+    function hideAllDropdowns() {
+      document.querySelectorAll('.user-dropdown').forEach(dd => dd.classList.add('hidden'));
+      document.querySelectorAll('#mobile-community-dropdown, #desktop-community-dropdown')
+        .forEach(dd => dd.classList.add('hidden'));
+    }
 
-        // Sidebar Toggle
-        const sidebarToggle = document.getElementById('sidebar-toggle');
-        const sidebar = document.querySelector('.sidebar');
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      // Mobile Nav Toggle
+      const mobileNavToggle = document.getElementById('mobile-nav-toggle');
+      const mobileNav = document.getElementById('mobile-nav');
+      const mobileNavClose = document.getElementById('mobile-nav-close');
 
-        sidebarToggle.addEventListener('click', () => {
-          sidebar.classList.toggle('hidden');
-        });
+      mobileNavToggle.addEventListener('click', () => {
+        mobileNav.classList.toggle('hidden');
+      });
 
-        // Community Dropdowns
-        const communityNavs = [
-          document.getElementById('mobile-community-nav'),
-          document.getElementById('desktop-community-nav')
-        ];
+      mobileNavClose.addEventListener('click', () => {
+        mobileNav.classList.add('hidden');
+      });
 
-        communityNavs.forEach(nav => {
-          nav.addEventListener('click', e => {
-            e.preventDefault();
-            const dropdownId = nav.id.includes('mobile') ? 'mobile-community-dropdown' : 'desktop-community-dropdown';
-            const dropdown = document.getElementById(dropdownId);
-            dropdown.classList.toggle('hidden');
-          });
-        });
+      // Sidebar Toggle
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const sidebar = document.querySelector('.sidebar');
 
-        // User Avatar Dropdown
-        document.querySelectorAll('.user-avatar img').forEach(img => {
-          img.addEventListener('click', e => {
-            e.stopPropagation();
-            const wrapper = img.closest('.user-avatar');
-            const dropdown = wrapper.querySelector('.user-dropdown');
-            hideAllDropdowns();
-            dropdown.classList.toggle('hidden');
-          });
-        });
+      sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('hidden');
+      });
 
-        // Close Dropdowns on Outside Click
-        document.addEventListener('click', e => {
-          if (!e.target.closest('.user-avatar') && !e.target.closest('#mobile-community-nav') && !e.target.closest('#desktop-community-nav')) {
-            hideAllDropdowns();
-          }
-        });
+      // Community Dropdowns
+      const communityNavs = [
+        document.getElementById('mobile-community-nav'),
+        document.getElementById('desktop-community-nav')
+      ];
 
-        // Logout Popup Buttons
-        document.getElementById('confirm-logout').addEventListener('click', logout);
-        document.getElementById('cancel-logout').addEventListener('click', () => {
-          document.getElementById('logout-popup').style.display = 'none';
-        });
-
-        // Mode Toggle (Placeholder)
-        document.querySelectorAll('#mobile-mode-toggle, #desktop-mode-toggle').forEach(button => {
-          button.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            const icon = button.querySelector('i');
-            const text = button.querySelector('span');
-            if (document.body.classList.contains('dark-mode')) {
-              icon.classList.replace('fa-sun', 'fa-moon');
-              text.textContent = 'Dark Mode';
-            } else {
-              icon.classList.replace('fa-moon', 'fa-sun');
-              text.textContent = 'Light Mode';
-            }
-          });
+      communityNavs.forEach(nav => {
+        nav.addEventListener('click', e => {
+          e.preventDefault();
+          const dropdownId = nav.id.includes('mobile') ? 'mobile-community-dropdown' : 'desktop-community-dropdown';
+          const dropdown = document.getElementById(dropdownId);
+          dropdown.classList.toggle('hidden');
         });
       });
-    </script>
-    <script src="/js/home.js"></script>
-  </body>
+
+      // User Avatar Dropdown
+      document.querySelectorAll('.user-avatar img').forEach(img => {
+        img.addEventListener('click', e => {
+          e.stopPropagation();
+          const wrapper = img.closest('.user-avatar');
+          const dropdown = wrapper.querySelector('.user-dropdown');
+          hideAllDropdowns();
+          dropdown.classList.toggle('hidden');
+        });
+      });
+
+      // Close Dropdowns on Outside Click
+      document.addEventListener('click', e => {
+        if (!e.target.closest('.user-avatar') && !e.target.closest('#mobile-community-nav') && !e.target.closest('#desktop-community-nav')) {
+          hideAllDropdowns();
+        }
+      });
+
+      // Logout Popup Buttons
+      document.getElementById('confirm-logout').addEventListener('click', logout);
+      document.getElementById('cancel-logout').addEventListener('click', () => {
+        document.getElementById('logout-popup').style.display = 'none';
+      });
+
+      // Mode Toggle (Placeholder)
+      document.querySelectorAll('#mobile-mode-toggle, #desktop-mode-toggle').forEach(button => {
+        button.addEventListener('click', () => {
+          document.body.classList.toggle('dark-mode');
+          const icon = button.querySelector('i');
+          const text = button.querySelector('span');
+          if (document.body.classList.contains('dark-mode')) {
+            icon.classList.replace('fa-sun', 'fa-moon');
+            text.textContent = 'Dark Mode';
+          } else {
+            icon.classList.replace('fa-moon', 'fa-sun');
+            text.textContent = 'Light Mode';
+          }
+        });
+      });
+    });
+  </script>
+  <script src="/js/home.js"></script>
+</body>
+
 </html>

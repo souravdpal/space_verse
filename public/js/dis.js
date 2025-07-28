@@ -1,4 +1,3 @@
-// Function to navigate
 function navigateTo(target) {
     const id = localStorage.getItem("id");
     if (id) {
@@ -13,7 +12,6 @@ function navigateTo(target) {
     }
 }
 
-// Function to fetch character data from /c/list
 async function fetchCharacters() {
     try {
         const response = await fetch('/c/list');
@@ -28,7 +26,6 @@ async function fetchCharacters() {
     }
 }
 
-// Function to display cards with limited tags
 function displayCards(data) {
     const cardContainer = document.getElementById('cardContainer');
     cardContainer.innerHTML = '';
@@ -38,53 +35,70 @@ function displayCards(data) {
         return;
     }
 
-    // Add Create New card
-    const createCard = document.createElement('div');
-    createCard.className = 'card create-card';
-    createCard.innerHTML = '<h3>➕ Create New Character</h3>';
-    createCard.addEventListener('click', () => {
-        let id = localStorage.getItem('id')
-        window.location.href = `/make/u/${encodeURIComponent(id)}`;
-    });
-    cardContainer.appendChild(createCard);
-
     data.forEach(character => {
         const card = document.createElement('div');
         card.className = 'card';
-        const allTags = character.tags || [];
-        const displayedTags = allTags.slice(0, 5); // Show only first 5 tags
-        const tagTypes = ['trait', 'skill', 'personality', 'role']; // Cycle through these types
+        const allTags = (character.tags || '').split(' ').filter(tag => tag);
+        const displayedTags = allTags.slice(0, 5);
+        const tagTypes = ['trait', 'skill', 'personality', 'role'];
         const tagsHTML = displayedTags.map((tag, index) => {
             const typeClass = tagTypes[index % tagTypes.length];
-            return `<span class="tag ${typeClass}">${tag.replace('@', '')}</span>`; // Remove @ and add type class
+            return `<span class="tag ${typeClass}" title="${tag.replace('@', '')}">${tag.replace('@', '')}</span>`;
         }).join('');
-        const relationshipText = character.relationships || '';
+        const relationshipText = character.relationships || 'No relationship details available.';
+        const creatorText = character.creator || 'Unknown';
+        const creatorId = character.creatorId || 'unknown';
         card.innerHTML = `
             <div class="card-content">
                 <div class="card-image">
-                    <img src="${character.link || `https://api.dicebear.com/7.x/bottts/svg?seed=${character.name}`}" width="100" height="100" class="avatar">
+                    <img src="${character.link || `https://api.dicebear.com/7.x/bottts/svg?seed=${character.name}`}" width="140" height="140" class="avatar">
                 </div>
                 <div class="card-details">
                     <h3 class="character-name">${character.name || 'Unnamed Character'}</h3>
                     <div class="tags-container">${tagsHTML}</div>
                     <p class="description">${relationshipText}</p>
+                    <p class="creator-name" data-creator-id="${creatorId}"> by @${creatorText}</p>
+                    <p class="view-count">Views: ${character.viewCount || 0}</p>
                 </div>
             </div>
         `;
 
-        // Store all tags for filtering
         card.dataset.allTags = allTags.join(' ');
-
         card.addEventListener('click', () => {
             window.location.href = `/chat/c/${character.id}`;
         });
         cardContainer.appendChild(card);
     });
+
+    // Tag click listeners
+    document.querySelectorAll('.tag').forEach(tag => {
+        tag.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const searchBox = document.getElementById('searchBox');
+            const tagText = tag.textContent.replace('@', '');
+            searchBox.value = tagText;
+            filterCards(tagText);
+        });
+    });
+
+    // Creator name click listeners
+    document.querySelectorAll('.creator-name').forEach(creator => {
+        creator.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const creatorId = creator.getAttribute('data-creator-id');
+            const userId = localStorage.getItem('id');
+            if (userId) {
+                window.location.href = `/creator/works?creatorId=${encodeURIComponent(creatorId)}&uid=${encodeURIComponent(userId)}`;
+            } else {
+                console.error("No user ID found in localStorage");
+                window.location.href = "/login.html";
+            }
+        });
+    });
 }
 
-// Search and filter functionality
 function filterCards(searchTerm) {
-    const cards = document.querySelectorAll('.card:not(.create-card)');
+    const cards = document.querySelectorAll('.card');
     searchTerm = searchTerm.toLowerCase();
     cards.forEach(card => {
         const name = card.querySelector('.character-name').textContent.toLowerCase();
@@ -99,20 +113,17 @@ function filterCards(searchTerm) {
     });
 }
 
-// Event Listeners
 document.addEventListener('DOMContentLoaded', async () => {
     const characters = await fetchCharacters();
     displayCards(characters);
 
-    // Theme Toggle with Night Mode Default at 06:24 PM IST
     const themeToggle = document.getElementById('themeToggle');
     const icon = themeToggle.querySelector('i');
     const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+    const istOffset = 5.5 * 60 * 60 * 1000;
     const istTime = new Date(now.getTime() + istOffset);
     const hour = istTime.getUTCHours();
 
-    // Set night theme by default between 6 PM and 6 AM IST
     if (hour >= 18 || hour < 6) {
         document.body.classList.add('night-theme');
         icon.classList.add('fa-cloud-moon');
@@ -137,37 +148,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Navbar Toggle
     const navbarToggle = document.querySelector('.navbar-toggle');
     const navbarNav = document.querySelector('.navbar-nav');
     navbarToggle.addEventListener('click', () => {
         navbarNav.classList.toggle('active');
     });
 
-    // Modal Close
     document.querySelector('#modal .close').addEventListener('click', () => {
         document.getElementById('modal').style.display = 'none';
     });
 
-    // Navigation Links
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const target = link.getAttribute('data-target');
             navigateTo(target);
-            navbarNav.classList.remove('active'); // Close navbar after click
+            navbarNav.classList.remove('active');
         });
     });
 
-    // Search functionality
     document.getElementById('searchBox').addEventListener('input', (e) => {
         filterCards(e.target.value);
-    });
-
-    // Tag click filtering
-    document.querySelectorAll('.tag').forEach(tag => {
-        tag.addEventListener('click', () => {
-            filterCards(tag.textContent);
-        });
     });
 });
