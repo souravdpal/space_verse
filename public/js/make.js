@@ -1,24 +1,23 @@
-const tagSuggestions = ['@hero', '@villain', '@sidekick', '@mentor', '@rival', '@friend', '@enemy'];
+const tagSuggestions = ['@hero', "@shy", '@cute', '@villain', '@sidekick', '@mentor', '@rival', '@friend', '@enemy'];
 const tagInput = document.getElementById('charTags');
 const suggestionsContainer = document.getElementById('tagSuggestions');
 const imageUpload = document.getElementById('imageUpload');
 const uploadButton = document.getElementById('uploadImage');
 const imagePreview = document.getElementById('imagePreview');
 
+// ID generator
 function generateId() {
     return 'char_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
 }
 
-// Trigger file input click when upload button is clicked
+// Image preview setup
 uploadButton.addEventListener('click', () => {
     imageUpload.click();
 });
 
-// Handle image upload and preview
-imageUpload.addEventListener('change', async (event) => {
+imageUpload.addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (file) {
-        // Show preview
         const reader = new FileReader();
         reader.onload = (e) => {
             imagePreview.innerHTML = `
@@ -27,99 +26,83 @@ imageUpload.addEventListener('change', async (event) => {
                     <button type="button" class="remove-image">✖</button>
                 </div>
             `;
-            // Add event listener for remove button
             document.querySelector('.remove-image').addEventListener('click', () => {
                 imagePreview.innerHTML = '';
-                imageUpload.value = ''; // Clear file input
+                imageUpload.value = '';
             });
         };
         reader.readAsDataURL(file);
     }
 });
 
-document.getElementById('characterForm').addEventListener('submit', async function(event) {
+// Character form submit
+document.getElementById('characterForm').addEventListener('submit', async function (event) {
     event.preventDefault();
     const charId = generateId();
-    
-    // Handle image upload if present
-    let imageUrl = document.getElementById('imageLink').value.trim();
+
+    // Fetch creator info
+    let res = await fetch(`/cred?uid=${localStorage.getItem('id')}`);
+    let data = await res.json();
+    let serveruser = data.name;
+
+    const formData = new FormData();
+    formData.append('id', charId);
+    formData.append('name', document.getElementById('charName').value);
+    formData.append('firstLine', document.getElementById('charFirstLine').value);
+    formData.append('background', document.getElementById('charBackground').value);
+    formData.append('behavior', document.getElementById('charBehavior').value);
+    formData.append('relationships', document.getElementById('charRelationships').value);
+    formData.append('tags', document.getElementById('charTags').value);
+    formData.append('creatorId', localStorage.getItem('id'));
+    formData.append('creator', serveruser);
+
     if (imageUpload.files[0]) {
-        const formData = new FormData();
         formData.append('image', imageUpload.files[0], `${charId}.png`);
-        
-        try {
-            const uploadResponse = await fetch(`/char/uploads/${charId}`, {
-                method: 'POST',
-                body: formData
-            });
-            const responseData = await uploadResponse.json();
-            if (uploadResponse.ok && responseData.msg === 'Image uploaded successfully') {
-                imageUrl = responseData.path || `/charimage/uploads/${charId}.png`;
-                console.log('Image uploaded, path:', imageUrl);
-            } else {
-                throw new Error(responseData.error || 'Image upload failed');
-            }
-        } catch (err) {
-            console.error("Image upload error:", err);
-            alert("Failed to upload image: " + err.message);
-            return; // Stop form submission if image upload fails
-        }
     }
 
-    const character = {
-        id: charId,
-        name: document.getElementById('charName').value,
-        firstLine: document.getElementById('charFirstLine').value,
-        background: document.getElementById('charBackground').value,
-        behavior: document.getElementById('charBehavior').value,
-        relationships: document.getElementById('charRelationships').value,
-        tags: document.getElementById('charTags').value
-            .split(' ')
-            .filter(tag => tag.startsWith('@') && tag.length > 1) || [],
-        image: imageUrl || undefined,
-        creatorId : localStorage.getItem('id'),
-        creator : localStorage.getItem('username')
-
-    };
-
     try {
-        const charResponse = await fetch('/c/char', {
+        const uploadResponse = await fetch(`/char/uploads/${charId}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(character)
+            body: formData
         });
-        const charData = await charResponse.json();
-        if (charResponse.ok && charData.msg) {
+
+        const responseData = await uploadResponse.json();
+        if (uploadResponse.ok) {
             window.location.href = `/chat/c/${charId}`;
         } else {
-            alert("Something went wrong: " + (charData.error || "Unknown error"));
+            alert("Character creation failed: " + (responseData.error || "Unknown error"));
         }
     } catch (err) {
-        console.error("Character creation error:", err);
+        console.error("Upload error:", err);
         alert("Server error: " + err.message);
     }
 });
 
-document.getElementById('resetForm').addEventListener('click', function() {
+// Reset form
+document.getElementById('resetForm').addEventListener('click', () => {
     document.getElementById('characterForm').reset();
     imagePreview.innerHTML = '';
     imageUpload.value = '';
 });
 
-document.getElementById('themeToggle').addEventListener('click', function() {
+// Theme toggle
+document.getElementById('themeToggle').addEventListener('click', () => {
     document.body.classList.toggle('dark-theme');
     document.body.classList.toggle('light-theme');
-    this.textContent = document.body.classList.contains('dark-theme') ? '🌙' : '☀️';
+    document.getElementById('themeToggle').textContent =
+        document.body.classList.contains('dark-theme') ? '🌙' : '☀️';
 });
 
-document.getElementById('fullscreenToggle').addEventListener('click', function() {
-    document.querySelector('.container').classList.toggle('fullscreen');
-    this.textContent = document.querySelector('.container').classList.contains('fullscreen') ? '🖥️' : '🔲';
+// Fullscreen toggle
+document.getElementById('fullscreenToggle').addEventListener('click', () => {
+    const container = document.querySelector('.container');
+    container.classList.toggle('fullscreen');
+    document.getElementById('fullscreenToggle').textContent =
+        container.classList.contains('fullscreen') ? '🖥️' : '🔲';
 });
 
-tagInput.addEventListener('input', function() {
+// Tag suggestion
+tagInput.addEventListener('input', function () {
     const value = this.value.toLowerCase();
     if (value.includes('@')) {
         const lastWord = value.split(' ').pop();
@@ -142,10 +125,12 @@ function addTag(tag) {
     tagInput.focus();
 }
 
-document.getElementById('createImage').addEventListener('click', function() {
+// Placeholder for image generation
+document.getElementById('createImage').addEventListener('click', () => {
     alert('Coming Soon');
 });
 
+// 🎇 Particle canvas background
 const canvas = document.getElementById('particleCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;

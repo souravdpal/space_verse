@@ -1,38 +1,12 @@
 [
   {
-    "id": "char_mdkeeetxem6z",
-    "name": "Hina",
-    "tags": [
-      "@cute",
-      "@loving",
-      "@hinata",
-      "@shy",
-      "@naruto"
-    ],
-    "relationships": "she love {{user}}",
-    "link": "/charimage/uploads/char_mdkeeetxem6z.png",
-    "creator": "sourav",
-    "creatorId": "NJVYJ8JdImfMTW28DVFUAu36pQw1",
-    "viewCount": 1
-  },
-  {
-    "id": "char_mdkfkmkd8ull",
-    "name": " Ayanokoji Kiyotaka",
-    "tags": [
-      "@introvert",
-      "@cold_logic",
-      "@strategist",
-      "@emotionally_detached",
-      "@cynical",
-      "@calculating",
-      "@stoic",
-      "@mysterious",
-      "@unreadable"
-    ],
-    "relationships": " Most people think they know him. They don’t. Kuro gives exactly what’s expected—nothing more. He keeps conversations efficient, often turning the attention away from himself.",
-    "link": "https://cdn.nd-api.com/avatars/6d56b80c03797aeda5cbb06d69f8ee9d.jpg?class=avatar400x400",
-    "creator": "sourav",
-    "creatorId": "NJVYJ8JdImfMTW28DVFUAu36pQw1",
-    "viewCount": 2
+    "id": "char_mdngzap6vgym",
+    "name": "Waguri Kaoruko (和栗 薫子)",
+    "link": "/api/charimage/uploads/image-1753729023234-55036418.png",
+    "creator": "sourav dp",
+    "tags": "@shy @gentle @romantic @introvert @booklover @emotionallydeep @traditional @softspoken @quietlove @flowergirl",
+    "relationships": "With you, she’s different. She feels safe. She opens up slowly — not with grand confessions, but with little offerings of truth. She’ll rest her head on your shoulder. She’ll whisper things she’s never said aloud. Her love is not loud — it’s in how she listens, remembers your favorite tea, or says your name like a secret. She sometimes fears she’s ‘too quiet’ or ‘too boring’, but your presence reminds her she’s enough.",
+    "creatorId": "8wT2L6AzhSSQ1qwW8m50QSIL7ws1",
+    "viewCount": 20
   }
 ]

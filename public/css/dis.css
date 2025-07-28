@@ -1,4 +1,3 @@
-/* Navbar Styles */
 .navbar {
     display: flex;
     justify-content: space-between;
@@ -13,8 +12,8 @@
 }
 
 .navbar-brand {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.75rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.8rem;
     font-weight: 700;
     color: var(--accent-color);
     text-transform: uppercase;
@@ -91,7 +90,6 @@ body.light-theme .theme-toggle:hover {
     color: var(--accent-color);
 }
 
-/* Container and Search Bar */
 .container {
     padding: 2rem;
     max-width: 800px;
@@ -100,13 +98,13 @@ body.light-theme .theme-toggle:hover {
 
 .search-bar {
     width: 100%;
-    padding: 0.9rem;
+    padding: 1rem;
     margin-bottom: 2rem;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 1rem;
     color: var(--text-color);
-    background-color: rgba(var(--card-bg), 0.7);
+    background-color: rgba(var(--card-bg), 0.8);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -117,52 +115,46 @@ body.light-theme .theme-toggle:hover {
 .search-bar:focus {
     outline: none;
     border-color: var(--accent-color);
-    box-shadow: 0 0 8px rgba(var(--accent-color), 0.5);
+    box-shadow: 0 0 10px rgba(var(--accent-color), 0.3);
 }
 
-/* Grid and Card Styles */
 .grid {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    gap: 2rem;
     padding: 1rem;
 }
 
 .card {
     max-width: 700px;
-    margin: 0 auto;
+    width: 100%;
+    height: 300px;
+    margin: 0 auto 1rem auto;
     padding: 1.5rem;
-    border-radius: 16px;
+    border-radius: 12px;
     background-color: var(--card-bg);
-    box-shadow: 0 0 15px rgba(0, 170, 255, 0.05);
-    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     align-items: stretch;
-    gap: 1rem;
-    min-height: 200px; /* Increased minimum height */
-    padding-bottom: 2rem; /* Invisible padding at bottom */
-}
-
-.card::after {
-    content: "";
-    display: block;
-    height: 1rem; /* Additional invisible padding */
+    gap: 1.5rem;
 }
 
 .card:hover {
-    transform: scale(1.01);
-    box-shadow: 0 0 10px rgba(var(--accent-color), 0.15);
+    transform: translateY(-4px);
+    box-shadow: 0 6px 14px rgba(var(--accent-color), 0.2);
 }
 
 .avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 12px;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
     object-fit: cover;
-    margin-right: 1rem;
+    margin-right: 1.5rem;
     transition: transform 0.3s ease;
     flex-shrink: 0;
+    border: 2px solid var(--accent-color);
 }
 
 .card:hover .avatar {
@@ -172,17 +164,24 @@ body.light-theme .theme-toggle:hover {
 .card-content {
     flex: 1;
     display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+    height: 100%;
+}
+
+.card-details {
+    flex: 1;
+    display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 0.5rem;
 }
 
 .character-name {
     font-family: 'Nunito', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.7rem;
     font-weight: 700;
     color: var(--accent-color);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -191,87 +190,78 @@ body.light-theme .theme-toggle:hover {
 .tags-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-    flex-grow: 0;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
 }
 
 .tag {
     display: inline-block;
-    width: 80px;
-    padding: 4px 6px;
-    border-radius: 8px;
-    font-size: 0.75rem;
+    max-width: 90px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 0.85rem;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
 .tag.trait {
-    background-color: #2a2a40;
-    box-shadow: 0 2px 4px rgba(255, 105, 180, 0.3);
+    background-color: rgba(255, 105, 180, 0.15);
     color: #ff69b4;
 }
 
 .tag.skill {
-    background-color: #2a2a40;
-    box-shadow: 0 2px 4px rgba(144, 238, 144, 0.3);
+    background-color: rgba(144, 238, 144, 0.15);
     color: #90ee90;
 }
 
 .tag.personality {
-    background-color: #2a2a40;
-    box-shadow: 0 2px 4px rgba(173, 216, 230, 0.3);
+    background-color: rgba(173, 216, 230, 0.15);
     color: #add8e6;
 }
 
 .tag.role {
-    background-color: #2a2a40;
-    box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+    background-color: rgba(255, 215, 0, 0.15);
     color: #ffd700;
 }
 
 .tag:hover {
     transform: scale(1.05);
+    background-color: rgba(var(--accent-color), 0.2);
 }
 
 body.light-theme .tag {
-    background-color: #e2e8f0;
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 body.light-theme .tag.trait {
-    box-shadow: 0 2px 4px rgba(255, 105, 180, 0.2);
     color: #ff69b4;
 }
 
 body.light-theme .tag.skill {
-    box-shadow: 0 2px 4px rgba(144, 238, 144, 0.2);
     color: #90ee90;
 }
 
 body.light-theme .tag.personality {
-    box-shadow: 0 2px 4px rgba(173, 216, 230, 0.2);
     color: #add8e6;
 }
 
 body.light-theme .tag.role {
-    box-shadow: 0 2px 4px rgba(255, 215, 0, 0.2);
     color: #ffd700;
 }
 
 body.light-theme .tag:hover {
-    background-color: #d1d5db;
+    background-color: rgba(var(--accent-color), 0.1);
 }
 
 .description {
-    font-size: 0.95rem;
+    font-size: 1rem;
     line-height: 1.5;
     color: var(--text-secondary);
-    margin-top: 0.8rem;
-    flex-grow: 1;
+    margin-bottom: 0.75rem;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -283,7 +273,39 @@ body.light-theme .description {
     color: #64748b;
 }
 
-/* Modal Styles */
+.creator-name {
+    font-size: 0.95rem;
+    color: var(--accent-color);
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.creator-name:hover {
+    color: var(--text-secondary);
+    transform: translateY(-1px);
+}
+
+body.light-theme .creator-name {
+    color: var(--accent-color);
+}
+
+body.light-theme .creator-name:hover {
+    color: #475569;
+}
+
+.view-count {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-align: right;
+}
+
+body.light-theme .view-count {
+    color: #64748b;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -299,8 +321,8 @@ body.light-theme .description {
 
 .modal-content {
     background: var(--card-bg);
-    padding: 2.5rem;
-    border-radius: 15px;
+    padding: 2rem;
+    border-radius: 12px;
     max-width: 550px;
     width: 90%;
     position: relative;
@@ -309,16 +331,16 @@ body.light-theme .description {
 
 .modal-content h2 {
     font-family: 'Nunito', sans-serif;
-    font-size: 2rem;
+    font-size: 1.8rem;
     margin-bottom: 1.5rem;
     color: var(--accent-color);
 }
 
 .close {
     position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    font-size: 1.8rem;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.6rem;
     cursor: pointer;
     color: var(--text-secondary);
     transition: color 0.3s ease, transform 0.2s ease;
@@ -337,13 +359,11 @@ body.light-theme .close:hover {
     color: var(--accent-color);
 }
 
-/* Animations */
 @keyframes zoomIn {
     from { opacity: 0; transform: scale(0.8); }
     to { opacity: 1; transform: scale(1); }
 }
 
-/* Responsive Design */
 @media (max-width: 600px) {
     .navbar {
         padding: 1rem;
@@ -381,34 +401,48 @@ body.light-theme .close:hover {
 
     .search-bar {
         font-size: 0.95rem;
-        padding: 0.7rem;
+        padding: 0.8rem;
     }
 
     .card {
         padding: 1rem;
         flex-direction: column;
-        min-height: 180px; /* Adjusted for mobile */
-        padding-bottom: 1.5rem;
-    }
-
-    .card::after {
-        height: 0.75rem; /* Adjusted invisible padding for mobile */
+        height: 360px;
+        margin-bottom: 1rem;
     }
 
     .avatar {
-        width: 64px;
-        height: 64px;
+        width: 100px;
+        height: 100px;
         margin-right: 0;
         margin-bottom: 1rem;
     }
 
+    .card-content {
+        flex-direction: column;
+    }
+
     .character-name {
-        font-size: 1.1rem;
+        font-size: 1.3rem;
     }
 
     .tag {
-        width: 60px;
-        font-size: 0.7rem;
+        max-width: 70px;
+        font-size: 0.8rem;
+        padding: 5px 8px;
+    }
+
+    .description {
+        font-size: 0.95rem;
+        -webkit-line-clamp: 2;
+    }
+
+    .creator-name {
+        font-size: 0.9rem;
+    }
+
+    .view-count {
+        font-size: 0.85rem;
     }
 
     .modal-content {
@@ -422,36 +456,35 @@ body.light-theme .close:hover {
     .close {
         top: 1rem;
         right: 1rem;
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
 }
 
 :root {
-    --bg-color: #0e0e1a;
-    --text-color: #e2e8f0;
-    --text-secondary: #94a3b8;
-    --card-bg: #1a1a2f;
-    --accent-color: #00aaff;
-    --border-color: #2a2a40;
+    --bg-color: #0f111a;
+    --text-color: #e5e7eb;
+    --text-secondary: #9ca3af;
+    --card-bg: #1e1e2e;
+    --accent-color: #38bdf8;
+    --border-color: #2d2d3b;
 }
 
 body.light-theme {
-    --bg-color: #f1f5f9;
-    --text-color: #1e293b;
-    --text-secondary: #64748b;
+    --bg-color: #f3f4f6;
+    --text-color: #1f2937;
+    --text-secondary: #6b7280;
     --card-bg: #ffffff;
-    --accent-color: #1e40af;
+    --accent-color: #2563eb;
     --border-color: #d1d5db;
 }
 
-/* Night mode (optional darker dark mode) */
 body.night-theme {
-    --bg-color: #0a0a14;
-    --text-color: #d0d4e0;
-    --text-secondary: #7a8494;
-    --card-bg: #15152a;
-    --accent-color: #1e90ff;
-    --border-color: #22223e;
+    --bg-color: #09090b;
+    --text-color: #d1d5db;
+    --text-secondary: #6b7280;
+    --card-bg: #14141f;
+    --accent-color: #60a5fa;
+    --border-color: #27272a;
 }
 
 body {
