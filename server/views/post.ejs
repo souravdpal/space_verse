@@ -1,138 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <style>
-        .like-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #4b5563;
-            /* Neutral gray for text/icons */
-            background-color: #f1f5f9;
-            /* Light background */
-            border: 1px solid #e2e8f0;
-            /* Subtle border */
-            border-radius: 20px;
-            /* Rounded edges */
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-        }
-
-        .like-btn i {
-            font-size: 16px;
-            transition: transform 0.2s ease;
-        }
-
-        .like-btn.liked i {
-            color: #e02424;
-            /* Red for liked state */
-            transform: scale(1.2);
-            /* Slight scale-up when liked */
-        }
-
-        .like-btn:hover {
-            background-color: #e2e8f0;
-            /* Slightly darker on hover */
-            color: #1f2937;
-            /* Darker text on hover */
-            transform: translateY(-1px);
-            /* Subtle lift effect */
-        }
-
-        .like-btn:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-            /* Blue focus ring */
-        }
-
-        .dark-mode .like-btn {
-            color: #d1d5db;
-            /* Light gray for dark mode */
-            background-color: #374151;
-            /* Dark background */
-            border-color: #4b5563;
-            /* Darker border */
-        }
-
-        .dark-mode .like-btn:hover {
-            background-color: #4b5563;
-            /* Slightly lighter on hover in dark mode */
-            color: #f3f4f6;
-            /* Brighter text on hover */
-        }
-
-        .dark-mode .like-btn.liked i {
-            color: #f87171;
-            /* Softer red for liked state in dark mode */
-        }
-    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIOVA</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@700&display=swap">
-    <link rel="stylesheet" href="/css/post.css">
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.0/quill.snow.min.css" rel="stylesheet"
+        onload="console.log('Quill CSS loaded')" onerror="console.error('Failed to load Quill CSS')">
+    <link href="/css/post.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"
+        onload="console.log('Firebase App Compat loaded')"
+        onerror="console.error('Failed to load Firebase App Compat')"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"
+        onload="console.log('Firebase Auth Compat loaded')"
+        onerror="console.error('Failed to load Firebase Auth Compat')"></script>
+    <script src="/js/firebase.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.0/quill.min.js"
+        onload="console.log('Quill JS loaded successfully')"
+        onerror="console.error('Failed to load Quill JS')"></script>
+    <script src="/js/post.js" defer></script>
 </head>
-
 <body class="dark-mode">
     <div class="container">
         <header class="header">
             <h1>AIOVA</h1>
-            <button id="theme-toggle" aria-label="Toggle theme">
-                <i class="ri-moon-line"></i>
-            </button>
+            <button id="theme-toggle"><i class="ri-moon-line"></i></button>
         </header>
-
-        <div class="main-content">
+        <main class="main-content">
             <aside class="sidebar">
                 <nav>
-                    <a href="/home"><i class="ri-home-4-line"></i> Home</a>
-                    <a onclick="charmake()"><i class="ri-user-add-line"></i> Create Characters</a>
-                    <a onclick="lognoregextbutout()" id="logout-btn"><i class="ri-logout-box-line"></i> Log Out</a>
+                    <a href="/home"><i class="ri-home-line"></i> Home</a>
+                    <a href="/characters"><i class="ri-user-add-line"></i> Create Characters</a>
+                    <a onclick="window.firebaseAuth.logout()"><i class="ri-logout-box-line"></i> Log Out</a>
                 </nav>
             </aside>
-            <script>
-                const lognoregextbutout = () => {
-                    const ans = prompt('Are you sure you want to logout? Y/N');
-                    if (ans && ans.trim().toLowerCase() === "y") {
-                        firebase.auth().signOut().then(() => {
-                            localStorage.clear();
-                            window.location.href = '/login';
-                        }).catch((error) => {
-                            console.error("Firebase logout failed:", error);
-                            alert("Logout failed. Please try again.");
-                        });
-                    }
-                };
-                let charmake = () => {
-                    window.location.href = `/make/u/${encodeURI(localStorage.getItem('id'))}`
-                }
-            </script>
-
-            <main>
-                <section class="profile-card">
-                    <div class="profile-img-container" id="profile-img-container">
-                        <img id="profile-img" src="/images/default-avatar.png" alt="Profile">
-                        <input type="file" id="profile-image-input" accept="image/*">
+            <section class="content">
+                <div class="profile-card">
+                    <div class="profile-img-container">
+                        <img id="profile-img" src="https://ik.imagekit.io/souravdpal/default-avatar.png" alt="Profile">
+                        <input type="file" id="profile-image-input" accept="image/jpeg,image/png,image/gif"
+                            style="display: none;">
                     </div>
                     <div class="profile-info">
                         <h2 id="profile-name">Loading...</h2>
-                        <p id="profile-bio"></p>
-                        <p id="profile-status">Status: <span class="status-indicator"></span> Loading...</p>
+                        <p id="profile-bio">Loading...</p>
+                        <span class="status-indicator online"></span>
+                        <span>Status: Online</span>
                     </div>
-                </section>
-
-                <section class="create-post">
+                </div>
+                <div class="create-post">
                     <h2>Create a Post</h2>
-                    <div class="quill-editor" id="editor"></div>
+                    <div id="editor" class="quill-editor"></div>
                     <div class="post-options">
+                        <div class="image-input-container">
+                            <input type="file" id="post-image-input" accept="image/jpeg,image/png,image/gif"
+                                class="image-input">
+                            <img id="post-image-preview" class="image-preview hidden" alt="Post Preview">
+                        </div>
                         <select id="community-select">
                             <option value="General">General</option>
                             <option value="Space">Space</option>
@@ -141,37 +64,42 @@
                             <option value="Cybersecurity">Cybersecurity</option>
                             <option value="Characters">Characters</option>
                         </select>
-                        <span id="char-count" class="char-count">0/500</span>
-                        <!--<input type="file" id="post-image-input" accept="image/*">-->
-                        <button id="preview-btn" class="preview-button"><i class="ri-eye-line"></i> Preview</button>
-                        <button id="post-btn" class="post-button"><i class="ri-send-plane-fill"></i> Post</button>
+                        <span id="char-count">0/500</span>
+                        <button id="preview-btn" class="preview-button">Preview</button>
+                        <button id="post-btn" class="post-button" disabled><i class="ri-send-plane-fill"></i> Post</button>
                     </div>
-                </section>
-
-                <section class="posts">
+                </div>
+                <div class="posts">
                     <h2>My Posts</h2>
                     <div id="posts-container" class="loading">
-                        <div class="spinner"></div>
+                        <span class="spinner"></span>
                     </div>
-                </section>
-            </main>
+                </div>
+            </section>
+        </main>
+        <div id="toast" class="toast"></div>
+        <div id="profile-modal" class="modal" aria-hidden="true">
+            <div class="profile-modal-content">
+                <span id="close-profile-modal" class="close-modal">&times;</span>
+                <h2>Edit Profile Picture</h2>
+                <div class="profile-image-view">
+                    <img id="profile-image-preview-modal" class="profile-image-preview hidden" alt="Profile Preview">
+                </div>
+                <div class="profile-image-buttons">
+                    <input type="file" id="profile-image-input-modal" accept="image/jpeg,image/png,image/gif">
+                    <button id="upload-profile-image">Upload New Image</button>
+                    <button id="profile-view-image">View Full Size</button>
+                    <button id="cancel-upload">Cancel</button>
+                </div>
+            </div>
         </div>
-    </div>
-
-    <div id="toast" class="toast"></div>
-    <div id="preview-modal" class="modal">
-        <div class="modal-content">
-            <span id="close-modal" class="close">&times;</span>
-            <h2>Post Preview</h2>
-            <div id="preview-content"></div>
-            <img id="preview-image" class="preview-image" src="" alt="Post Image Preview" style="display: none;">
+        <div id="preview-modal" class="modal" aria-hidden="true">
+            <div class="modal-content post-modal-content">
+                <span id="close-modal" class="close-modal">&times;</span>
+                <h2>Post Preview</h2>
+                <div id="preview-content">Text goes here...</div>
+                <img id="preview-image" class="hidden" alt="Preview Image">
+            </div>
         </div>
-    </div>
-    <button id="back-to-top" class="back-to-top"><i class="ri-arrow-up-line"></i></button>
-
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-    <script src="/js/post.js"></script>
-</body>
-
+    </body>
 </html>

@@ -1,70 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Your Character</title>
     <link rel="stylesheet" href="/css/make.css">
+
+
 </head>
+
 <body>
     <canvas id="particleCanvas"></canvas>
     <div class="container">
-        <div class="header">
+        <header>
             <h1>Create Your Character</h1>
-            <div class="header-actions">
-                <button id="themeToggle" class="theme-toggle">🌙</button>
-                <button id="fullscreenToggle" class="theme-toggle">🖥️</button>
+            <div class="profile">
+                <span id="profile-name">Loading...</span>
+                <button id="theme-toggle-btn"><i>🌙</i></button>
+                <button id="fullscreen-toggle-btn"><i>🖥️</i></button>
             </div>
-        </div>
-
-        <form id="characterForm">
-            <div class="form-group">
-                <label for="charName">Character Name</label>
-                <input type="text" id="charName" required>
-            </div>
-
-            <div class="form-group">
-                <label for="charFirstLine">First Line</label>
-                <textarea id="charFirstLine" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="charBackground">Background</label>
-                <textarea id="charBackground" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="charBehavior">Behavior</label>
-                <textarea id="charBehavior" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="charRelationships">Tag story</label>
-                <textarea id="charRelationships" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="charTags">Tags (e.g., @hero, @villain) <span class="optional-label">(Optional)</span></label>
-                <input type="text" id="charTags">
-                <div id="tagSuggestions" class="tag-suggestions"></div>
-            </div>
-
-            <div class="form-group">
-                <label>Image Selection <span class="optional-label">(Optional)</span></label>
-                <div class="image-options">
-                    <input type="text" id="imageLink" placeholder="Enter image URL">
-                    <button type="button" id="createImage" class="btn btn-secondary">Create Image</button>
-                    <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-                    <button type="button" id="uploadImage" class="btn btn-secondary">Upload Image</button>
+        </header>
+        <main>
+            <form id="characterForm">
+                <div class="form-group">
+                    <label for="character-name">Character Name</label>
+                    <input type="text" id="character-name" required>
                 </div>
-                <div id="imagePreview" class="image-preview"></div>
+                <div class="form-group">
+                    <label for="first-line">First Line</label>
+                    <input type="text" id="first-line">
+                </div>
+                <div class="form-group">
+                    <label for="character-background">Background</label>
+                    <textarea id="character-background"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="character-behavior">Behavior</label>
+                    <textarea id="character-behavior"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="character-relationships">Tag story</label>
+                    <textarea id="character-relationships"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="tags">Tags (e.g., @hero, @villain) (Optional)</label>
+                    <input type="text" id="tags">
+                    <div id="tag-suggestions" style="display: none;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="image-upload">Image Selection (Optional)</label>
+                    <div class="image-upload-group">
+                        <button type="button" id="create-image">Create Image</button>
+                        <input type="file" id="image-upload" accept="image/*">
+                    </div>
+                    <div id="image-preview" style="display: none;"></div>
+                    <button type="button" id="remove-image" style="display: none;">Remove Image</button>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="create-character" class="btn-primary">Save Character</button>
+                    <button type="button" id="reset" class="btn-secondary">Reset</button>
+                </div>
+            </form>
+            <div id="loader" class="loader-overlay">
+                <div class="particle-burst"></div>
+                <span>Creating character...</span>
             </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Save Character</button>
-                <button type="button" id="resetForm" class="btn btn-secondary">Reset</button>
-            </div>
-        </form>
+            <div id="toast" class="toast"></div>
+        </main>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script defer src="/js/firebase.js"></script>
     <script src="/js/make.js"></script>
 </body>
+
 </html>

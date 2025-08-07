@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,59 +13,92 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <!-- Font Awesome CDN (Corrected integrity hash) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         @keyframes slideIn {
-            0% { transform: translateY(50px); opacity: 0; }
-            100% { transform: translateY(0); opacity: 1; }
+            0% {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
+
         .animate-slide-in {
             animation: slideIn 0.5s ease-out;
         }
+
         .dark-mode {
             background: url("https://images.unsplash.com/photo-1464802686167-b939a6910659") no-repeat center center fixed;
             background-size: cover;
             color: #e0e7ff;
         }
+
         .light-mode {
             background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #6b7280 100%);
             color: #1f2937;
         }
+
         .card-shadow {
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(10px);
             background: rgba(17, 24, 39, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
         .hover-scale {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+
         .hover-scale:hover {
             transform: scale(1.03);
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
         }
+
         .light-mode .card-shadow {
             background: rgba(255, 255, 255, 0.9);
             border-color: rgba(0, 0, 0, 0.1);
         }
+
         .light-mode .text-gray-300 {
             color: #4b5563;
         }
+
         .light-mode .text-indigo-600 {
             color: #4f46e5;
         }
+
         .light-mode .bg-gray-800 {
             background: #d1d5db;
             color: #1f2937;
         }
+
         @media (max-width: 640px) {
-            .card-shadow { padding: 1.5rem; }
-            h1 { font-size: 2rem; }
-            button { padding: 0.75rem; font-size: 0.9rem; }
-            .hover-scale:hover { transform: scale(1.02); }
+            .card-shadow {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            button {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+            }
+
+            .hover-scale:hover {
+                transform: scale(1.02);
+            }
         }
     </style>
 </head>
+
 <body class="dark-mode min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
     <div class="rounded-xl card-shadow p-8 max-w-md w-full animate-slide-in">
         <!-- Mode Toggle -->
@@ -77,14 +111,18 @@
         <p class="text-center text-gray-300 mb-8">Sign up with Google or GitHub</p>
 
         <!-- Google Sign-In Button -->
-        <button id="google-signin" class="hover-scale flex items-center justify-center w-full bg-indigo-100 text-indigo-600 font-semibold py-3 rounded-lg mb-4 transition duration-300">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" class="w-6 h-6 mr-2" />
+        <button id="google-signin"
+            class="hover-scale flex items-center justify-center w-full bg-indigo-100 text-indigo-600 font-semibold py-3 rounded-lg mb-4 transition duration-300">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo"
+                class="w-6 h-6 mr-2" />
             Sign in with Google
         </button>
 
         <!-- GitHub Sign-In Button -->
-        <button id="github-signin" class="hover-scale flex items-center justify-center w-full bg-gray-800 text-white font-semibold py-3 rounded-lg mb-6 transition duration-300">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/github.svg" alt="GitHub Logo" class="w-6 h-6 mr-2" />
+        <button id="github-signin"
+            class="hover-scale flex items-center justify-center w-full bg-gray-800 text-white font-semibold py-3 rounded-lg mb-6 transition duration-300">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/github.svg" alt="GitHub Logo"
+                class="w-6 h-6 mr-2" />
             Sign in with GitHub
         </button>
 
@@ -93,7 +131,8 @@
             <img id="user-photo" class="w-16 h-16 rounded-full mx-auto mb-4" alt="User Profile" />
             <h2 id="user-name" class="text-xl font-semibold text-indigo-400"></h2>
             <p id="user-email" class="text-gray-300 mb-4"></p>
-            <button id="sign-out" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">
+            <button id="sign-out"
+                class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">
                 Sign Out
             </button>
         </div>
@@ -188,22 +227,30 @@
         // Handle Authentication Success
         function handleAuthSuccess(user) {
             if (user && user.uid) {
-                localStorage.setItem("user", user.displayName || user.email || "Unknown");
-                localStorage.setItem("id", user.uid);
-                localStorage.setItem("email", user.email || "");
-                saveUser(user).then((response) => {
-                    console.log("User saved:", response);
-                    setTimeout(() => window.location.href = `/view/u/${user.uid}`, 1000);
-                }).catch((error) => {
-                    console.error("Error saving user:", error.message);
-                    if (error.message.includes("User already exists")) {
-                        displayError("User already exists. Redirecting...");
-                        setTimeout(() => window.location.href = `/view/u/${user.uid}`, 3000);
-                    } else {
-                        displayError("Sign-in saved failed. Redirecting...");
-                        localStorage.clear();
-                        setTimeout(() => window.location.href = "/login", 3000);
-                    }
+                user.getIdToken().then((idToken) => {
+                    localStorage.setItem("TokenId", idToken);
+                    localStorage.setItem("user", user.displayName || user.email || "Unknown");
+                    localStorage.setItem("id", user.uid);
+                    localStorage.setItem("email", user.email || "");
+
+                    saveUser(user).then((response) => {
+                        console.log("User saved:", response);
+                        setTimeout(() => window.location.href = `/view/u/${user.uid}`, 1000);
+                    }).catch((error) => {
+                        console.error("Error saving user:", error.message);
+                        if (error.message.includes("User already exists")) {
+                            displayError("User already exists. Redirecting...");
+                            setTimeout(() => window.location.href = `/view/u/${user.uid}`, 3000);
+                        } else {
+                            displayError("Sign-in save failed. Redirecting...");
+                            localStorage.clear();
+                            setTimeout(() => window.location.href = "/login", 3000);
+                        }
+                    });
+                }).catch((err) => {
+                    console.error("Error fetching token:", err);
+                    displayError("Token fetch failed. Redirecting...");
+                    setTimeout(() => window.location.href = "/login", 3000);
                 });
             } else {
                 console.error("Invalid user data:", user);
@@ -211,6 +258,7 @@
                 setTimeout(() => window.location.href = "/login", 3000);
             }
         }
+
 
         // Save user to backend
         async function saveUser(user) {
@@ -286,4 +334,5 @@
         }
     </script>
 </body>
+
 </html>

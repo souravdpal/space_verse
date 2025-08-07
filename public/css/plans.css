@@ -1,0 +1,24 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
+.container {
+    max-width: 1200px;
+}
+
+button:hover {
+    transform: translateY(-2px);
+}
+
+input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+
+.bg-gray-800 {
+    background-color: #2d3748;
+}
+
+.bg-gray-700 {
+    background-color: #4a5568;
+}

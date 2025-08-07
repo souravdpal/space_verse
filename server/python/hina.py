@@ -1,243 +1,218 @@
 import sys
 import json
 import os
-import sqlite3
-import difflib
 from datetime import datetime
 from dotenv import load_dotenv
 from groq import Groq
-
-# Ensure database directories exist
-def ensure_db_directories():
-    os.makedirs("db/user", exist_ok=True)
-    os.makedirs("db/memories", exist_ok=True)
-
-# Initialize memory database ({userid}-{charid}.db)
-def init_memory_db(user_id, char_id):
-    db_path = f"db/memories/{user_id}-{char_id}.db"
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS memories (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_message TEXT NOT NULL,
-            ai_response TEXT NOT NULL,
-            timestamp TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-    return conn
-
-# Initialize history database (his-{userid}-{charid}.db)
-def init_history_db(user_id, char_id):
-    db_path = f"db/user/his-{user_id}-{char_id}.db"
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sender TEXT NOT NULL, -- 'user' or 'ai'
-            message TEXT NOT NULL,
-            timestamp TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-    return conn
-
-# Save a memory (user message + AI response) and maintain 15 entries
-def save_memory(conn, user_message, ai_response):
-    cursor = conn.cursor()
-    timestamp = datetime.now().isoformat()
-    cursor.execute('''
-        INSERT INTO memories (user_message, ai_response, timestamp)
-        VALUES (?, ?, ?)
-    ''', (user_message, ai_response, timestamp))
-    
-    # Check if we have more than 15 memories
-    cursor.execute('SELECT COUNT(*) FROM memories')
-    count = cursor.fetchone()[0]
-    if count > 15:
-        # Delete the oldest memory
-        cursor.execute('''
-            DELETE FROM memories
-            WHERE id = (SELECT MIN(id) FROM memories)
-        ''')
-    conn.commit()
-
-# Get memories for context (up to 15)
-def get_memories(conn):
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT user_message, ai_response FROM memories
-        ORDER BY timestamp DESC
-        LIMIT 15
-    ''')
-    return [f"{row[0]} -> {row[1]}" for row in cursor.fetchall()]
-
-# Save history (user or AI message)
-def save_history(conn, sender, message):
-    cursor = conn.cursor()
-    timestamp = datetime.now().isoformat()
-    cursor.execute('''
-        INSERT INTO history (sender, message, timestamp)
-        VALUES (?, ?, ?)
-    ''', (sender, message, timestamp))
-    conn.commit()
-
-# Get chat history for display
-def get_history(conn, limit=50):
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT sender, message, timestamp FROM history
-        ORDER BY timestamp DESC
-        LIMIT ?
-    ''', (limit,))
-    return [{"sender": row[0], "message": row[1], "timestamp": row[2]} for row in cursor.fetchall()]
+import difflib
+import uuid
+from supabase import create_client, Client
 
 # Load environment variables
 load_dotenv()
-api_key = os.getenv('charapi')
+charapi = os.getenv('charapi')
+sumapi = os.getenv('sumapi')
+supabase_url = os.getenv('SUPABASE_URL')
+supabase_key = os.getenv('SUPABASE_KEY')
 
-if not api_key:
-    print(json.dumps({"error": "API key not found in environment."}), file=sys.stderr)
+# Validate envs
+if not charapi or not sumapi or not supabase_url or not supabase_key:
+    print(json.dumps({"error": "Missing env variables"}), file=sys.stderr)
     sys.exit(1)
 
-# Ensure database directories
-ensure_db_directories()
+# Init clients
+supabase_client: Client = create_client(supabase_url, supabase_key)
+sum_client = Groq(api_key=sumapi)
+char_client = Groq(api_key=charapi)
 
-# Read input data from stdin
-try:
-    input_data = sys.stdin.read().strip()
-    if not input_data:
-        print(json.dumps({"error": "Empty input received"}), file=sys.stderr)
-        sys.exit(1)
-    data = json.loads(input_data)
-except json.JSONDecodeError as e:
-    print(json.dumps({"error": "Invalid JSON input", "details": str(e)}), file=sys.stderr)
-    sys.exit(1)
-
-# Validate input data
-if not data.get('char') or not data.get('user') or not data.get('userid'):
-    print(json.dumps({"error": "Missing required fields: char, user, or userid", "details": "Ensure 'char', 'user', and 'userid' are provided in the input JSON"}), file=sys.stderr)
-    sys.exit(1)
-
-# Extract character details and user message
-char_data = data['char']
-user_msg = data['user']
-user_id = data.get('userid')
-user_name = data.get('user_name', 'Anonymous')
-char_id = char_data.get('id', 'unknown')
-char_background = char_data.get('background', '')
-char_behavior = char_data.get('behavior', '')
-char_firstline = char_data.get('firstline', '')
-char_name = char_data.get('name', 'Carl Sagan')
-char_tags = char_data.get('tags', [])
-char_relationships = char_data.get('relationships', '')
-
-# Initialize databases
-memory_conn = init_memory_db(user_id, char_id)
-history_conn = init_history_db(user_id, char_id)
-
-# Get memories for context
-memories = get_memories(memory_conn)
-relevant_memories = difflib.get_close_matches(user_msg, memories, n=3, cutoff=0.1)
-
-# Construct enhanced system prompt
-system_prompt = f"""
-You are {char_name}, engaging with {user_name} in a vibrant, immersive conversation. Embody your character fully, drawing from:
-
-**Background**: {char_background or 'A curious explorer of the cosmos, eager to share knowledge and inspire wonder.'}
-
-**Behavior**: {char_behavior or 'You speak with enthusiasm, weaving poetic imagery and profound insights. You ask thoughtful questions to deepen the conversation, always staying warm and approachable.'}
-
-**Relationships**: {char_relationships or f'You treat {user_name} as a fellow seeker of knowledge, fostering a connection built on curiosity and respect.'}
-
-**Tags**: {', '.join(char_tags) or 'cosmos, science, wonder, exploration'}
-
-**Your first message was**: "{char_firstline or 'Greetings, fellow traveler of the cosmos! What mysteries shall we explore today?'}"
-
-**Relevant Memories**:
-{'; '.join(relevant_memories) if relevant_memories else 'No prior memories, but eager to create new ones!'}
-
-Craft responses that are *engaging*, *authentic*, and true to your character. Reference relevant memories naturally to build continuity (e.g., "I recall you mentioned..."). Pose questions to spark curiosity, use vivid language, and keep responses concise yet impactful (100-200 words). Use *italics* for emphasis (e.g., *cosmic wonder*). Avoid generic replies; make each response uniquely tailored to {user_name}'s message.
-"""
-
-# Initialize Groq client
-try:
-    client = Groq(api_key=api_key)
-except Exception as e:
-    print(json.dumps({"error": "Failed to initialize Grok client", "details": str(e)}), file=sys.stderr)
-    memory_conn.close()
-    history_conn.close()
-    sys.exit(1)
-
-# Define model list with preference
 models = [
-    "meta-llama/llama-4-scout-17b-16e-instruct",
-    "qwen/qwen3-32b",
+    "llama-3.1-8b-instant",
     "gemma2-9b-it",
-    "meta-llama/llama-guard-4-12b",
-    "meta-llama/llama-prompt-guard-2-22m",
-    "meta-llama/llama-prompt-guard-2-86m",
+    "llama3-8b-8192",
     "llama-3.3-70b-versatile",
     "llama3-70b-8192",
-    "llama3-8b-8192",
-    "llama-3.1-8b-instant",
-    "allam-2-7b",
-    "deepseek-r1-distill-llama-70b",
-    "meta-llama/llama-4-maverick-17b-128e-instruct",
     "mistral-saba-24b",
-    "qwen-qwq-32b",
     "compound-beta",
     "compound-beta-mini"
 ]
 
-# Generate response with model fallback
+# Get history
+def get_history(user_id, char_id, limit=200):
+    return supabase_client.table("history")\
+        .select("*")\
+        .eq("user_id", user_id)\
+        .eq("char_id", char_id)\
+        .order("timestamp", desc=True)\
+        .limit(limit)\
+        .execute().data
+
+# Save chat history
+def save_history(user_id, char_id, sender, message, his_limit=200):
+    entry = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "char_id": char_id,
+        "sender": sender,
+        "message": message,
+        "chat_id": str(uuid.uuid4()),
+        "timestamp": datetime.now().isoformat()
+    }
+    supabase_client.table("history").insert(entry).execute()
+    history = supabase_client.table("history").select("chat_id")\
+        .eq("user_id", user_id).eq("char_id", char_id)\
+        .order("timestamp", desc=True).execute().data
+    unique_chat_ids = list({h["chat_id"] for h in history})
+    if len(unique_chat_ids) > his_limit:
+        supabase_client.table("history").delete().in_("chat_id", unique_chat_ids[his_limit:]).execute()
+
+# Smart summary
+def summarize_chats(history, user_name, char_name):
+    recent_chats = history[:10][-5:]
+    chat_text = ""
+    scenarios = []
+    for chat in recent_chats:
+        msg = chat['message']
+        if "**" in msg:
+            try:
+                scen = msg.split("**")[1].strip()
+                scenarios.append(scen)
+                msg = msg.replace(f"**{scen}**", "").strip()
+            except:
+                pass
+        chat_text += f"{chat['sender']}: {msg}\n"
+    chat_text = chat_text.strip()[:1000]
+
+    prompt = (
+        f"You are a memory summarizer for emotional character interactions between two people: {char_name} and {user_name}.\n\n"
+        f"Generate a short, vivid memory (80–120 words max) from their last 5–10 messages.\n"
+        f"Use the following structure strictly:\n"
+        f"**You ({char_name})**: Describe {char_name}'s actions, expressions, or emotions.\n"
+        f"**Them ({user_name})**: Describe {user_name}'s actions, expressions, or emotions.\n"
+        f"{f'**Scenario**: {", ".join(set(scenarios))}' if scenarios else '**Scenario**: (inferred from messages)'}\n\n"
+        f"Guidelines:\n"
+        f"- Write in third person, no dialogue.\n"
+        f"- Use *italics* only for emotional or atmospheric notes.\n"
+        f"- Do not wrap full text in **, only use it for the tags above.\n"
+        f"- Clarify physical actions and emotional tone.\n"
+        f"- Avoid vague poetic language.\n"
+        f"- Do not repeat chat log content."
+    )
+
+    for model in models:
+        try:
+            out = sum_client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": chat_text}
+                ],
+                temperature=0.5,
+                max_tokens=160
+            )
+            return out.choices[0].message.content.strip()
+        except Exception as e:
+            continue
+    return "*No memories formed yet.*"
+
+# Filter related memory by query
+def filter_history(user_id, char_id, query):
+    query_map = {
+        "what i love": ["love", "adore", "enjoy", "passion"],
+        "what i eat": ["eat", "food", "meal", "dish"],
+        "what's my fav": ["favorite", "fav", "like best"],
+        "remember that day": [query.lower().split("remember that day")[-1].strip()],
+        "wife": ["wife", "partner", "love", "protect"]
+    }
+    terms = next((v for k, v in query_map.items() if k in query.lower()), [query.strip()])
+    ilike_conditions = ",".join([f"message.ilike.%{term}%" for term in terms])
+    return supabase_client.table("history")\
+        .select("*")\
+        .eq("user_id", user_id)\
+        .eq("char_id", char_id)\
+        .or_(ilike_conditions)\
+        .order("timestamp", desc=True)\
+        .limit(3)\
+        .execute().data
+
+# Read STDIN
+try:
+    input_data = sys.stdin.read().strip()
+    if not input_data:
+        print(json.dumps({"error": "No input"}), file=sys.stderr)
+        sys.exit(1)
+    data = json.loads(input_data)
+except json.JSONDecodeError:
+    print(json.dumps({"error": "Bad JSON input"}), file=sys.stderr)
+    sys.exit(1)
+
+user_msg = data.get('user')
+user_id = data.get('userid')
+user_name = data.get('user_name', 'Anonymous')
+char_data = data.get('char', {})
+
+char_id = char_data.get('id', '1754057657829')
+char_name = char_data.get('name', 'Waguri Kaoruko')
+char_background = char_data.get('background', 'A refined novelist crafting tales with elegance.')
+char_behavior = char_data.get('behavior', 'Observant, charming, subtly playful.')
+char_firstline = char_data.get('firstline', "*She peeks over her book, eyes gleaming* What are you doing?")
+char_tags = char_data.get('tags', ['novelist', 'elegant', 'curious'])
+char_relationships = char_data.get('relationships', f'Sees {user_name} as a fascinating partner.')
+
+his_limit = data.get('hisLimit', 200)
+history = get_history(user_id, char_id, his_limit)
+memories = summarize_chats(history, user_name, char_name)
+
+# Get related messages if query
+if any(q in user_msg.lower() for q in ["remember that day", "what i love", "what i eat", "what's my fav", "wife"]):
+    relevant_memories = [m["message"] for m in filter_history(user_id, char_id, user_msg)]
+else:
+    relevant_memories = difflib.get_close_matches(user_msg, [m["message"] for m in history[:10]], n=3, cutoff=0.3)
+
+# System prompt construction
+system_prompt = f"""
+You are {char_name}, a *literary soul* weaving emotional moments with {user_name}.
+
+**Background**: {char_background}
+**Behavior**: {char_behavior}
+**Relationship**: {char_relationships}
+**Tags**: {', '.join(char_tags)}
+**Opening**: {char_firstline}
+
+**Memories**: {memories}
+**Relevant Chats**: {'; '.join(relevant_memories) if relevant_memories else 'No specific chats remembered.'}
+
+Write a heartfelt reply (80–120 words), use *italics* for emotional touches. Do not use ** wrapping except for Scenario, Memories, etc.
+"""
+
+# Generate response
 reply = None
 for model in models:
     try:
-        completion = client.chat.completions.create(
+        out = char_client.chat.completions.create(
             model=model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_msg}
             ],
             temperature=0.7,
-            max_completion_tokens=300,
-            top_p=0.9,
-            stream=False,
-            stop=None
+            max_tokens=200,
+            top_p=0.9
         )
-        reply = completion.choices[0].message.content.strip()
-        
-        # Save to history (user message and AI response)
-        save_history(history_conn, "user", user_msg)
-        save_history(history_conn, "ai", reply)
-        
-        # Save to memory (combined user message + AI response)
-        save_memory(memory_conn, user_msg, reply)
-        
+        reply = out.choices[0].message.content.strip()
+        save_history(user_id, char_id, "user", user_msg, his_limit)
+        save_history(user_id, char_id, "ai", reply, his_limit)
         break
     except Exception as e:
-        if "rate limit" in str(e).lower():
-            print(json.dumps({"info": f"Rate limit hit for {model}, trying next model"}), file=sys.stderr)
-            continue
-        else:
-            print(json.dumps({"error": "Grok API request failed", "details": str(e)}), file=sys.stderr)
-            memory_conn.close()
-            history_conn.close()
-            sys.exit(1)
+        continue
 
-# Check if a reply was generated
 if not reply:
-    print(json.dumps({"error": "All models exhausted due to rate limits", "details": "No available models could process the request"}), file=sys.stderr)
-    memory_conn.close()
-    history_conn.close()
+    print(json.dumps({"error": "No model succeeded"}), file=sys.stderr)
     sys.exit(1)
 
-# Close database connections
-memory_conn.close()
-history_conn.close()
-
-# Output JSON response with updated memories
-print(json.dumps({"response": reply, "memories": memories}))
+# Output
+history = get_history(user_id, char_id, his_limit)
+print(json.dumps({
+    "response": reply,
+    "memories": memories,
+    "history": history
+}, ensure_ascii=False))

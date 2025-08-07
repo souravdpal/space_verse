@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +14,7 @@
       padding: 20px;
       text-align: center;
     }
+
     .error-container {
       max-width: 600px;
       margin: 0 auto;
@@ -20,28 +22,39 @@
       background: #2a2a4a;
       border-radius: 10px;
     }
+
     h1 {
       font-size: 2em;
       margin-bottom: 10px;
     }
+
     p {
       font-size: 1.2em;
       color: #ccc;
     }
+
     a {
       color: #4a90e2;
       text-decoration: none;
     }
+
     a:hover {
       text-decoration: underline;
     }
   </style>
 </head>
+
 <body>
   <div class="error-container">
     <h1>Error</h1>
-    <p><%= message %></p>
+    <p>
+      <%= data && data.error ? data.error : 'An unexpected error occurred' %>
+    </p>
     <p><a href="/">Return to Home</a></p>
-  </div>
+     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script src="/js/firebase.js"></script>
+
 </body>
+
 </html>

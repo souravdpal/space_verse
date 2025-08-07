@@ -1,86 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Creator Profile</title>
-  <link rel="stylesheet" href="/css/creator.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator Profile</title>
+    <link rel="stylesheet" href="/css/creator.css">
 </head>
-
 <body>
-  <div class="creator-profile">
-    <div class="creator-header">
-      <img src="<%= creator.photo %>" alt="<%= creator.name %>'s avatar">
-      <div>
-        <h1>
-          <%= creator.name %>
-        </h1>
-        <p>
-          <%= creator.bio %>
-        </p>
-        <p id="fl">Followers:
-          <% if (creator.followers>= 1000000) { %>
-            <%= (creator.followers / 1000000).toFixed(1) %>m
-              <% } else if (creator.followers>= 1000) { %>
-                <%= (creator.followers / 1000).toFixed(1) %>k
-                  <% } else { %>
-                    <%= creator.followers %>
-                      <% } %>
-        </p>
-        <button id="fb" class="follow-btn <%= isFollowing ? 'following' : '' %>" data-creator-id="<%= creator.uid %>">
-          <%= isFollowing ? 'Unfollow' : 'Follow' %>
-        </button>
-      </div>
-    </div>
-  </div>
-  <style>
-    #fb {
-      background: linear-gradient(135deg, #FF416C, #FF4B2B);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 20px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(255, 65, 108, 0.4);
-
-    }
-
-    #fl {
-      color: aliceblue;
-    }
-  </style>
-  <div class="character-grid">
-    <% characters.forEach(char=> { %>
-      <div class="character-card" data-char-id="<%= char.id %>">
-        <img src="<%= char.link || '/images/fallback.png' %>" alt="<%= char.name %>">
-        <div class="character-card-content">
-          <h3>
-            <%= char.name %>
-          </h3>
-          <p>
-            <%= char.background %>
-          </p>
-          <div class="character-stats">
-            <span class="view-count">
-              <%= char.viewCount || 0 %> Views
-            </span>
-            <span class="chat-count">
-              <%= char.chatCount || 0 %> Chats
-            </span>
-          </div>
-          <button class="like-button <%= char.liked ? 'liked' : '' %>" data-char-id="<%= char.id %>">
-            <span class="like-count">
-              <%= char.likeCount || 0 %>
-            </span>
-          </button>
+    <nav class="navbar">
+        <button class="navbar-toggle">☰</button>
+        <div class="navbar-nav">
+            <a href="#" class="nav-link" data-target="/view/u/">Home</a>
+            <a href="#" class="nav-link" data-target="/dis/u/">Discover</a>
+            <a href="#" class="nav-link" data-target="/make/u/">Create</a>
+            <a href="#" class="nav-link" data-target="/post/u/">Profile</a>
+            <button id="theme-toggle" class="theme-toggle">🌙 Dark Mode</button>
         </div>
-      </div>
-      <% }) %>
-  </div>
+    </nav>
 
-  <script src="/js/creator.js"></script>
+    <div class="creator-profile">
+        <img src="<%= data.creator.photo %>" alt="Creator Photo" class="creator-photo">
+        <h1 class="creator-name"><%= data.creator.name %></h1>
+        <p class="creator-bio"><%= data.creator.bio %></p>
+        <p class="follower-count" data-follower-count="<%= data.creator.followers %>">
+            Followers: <%= data.creator.followers >= 1000000 ? (data.creator.followers / 1000000).toFixed(1) + 'm' : data.creator.followers >= 1000 ? (data.creator.followers / 1000).toFixed(1) + 'k' : data.creator.followers %>
+        </p>
+        <button class="follow-btn <%= data.creator.isFollowing ? 'following' : '' %>"
+                data-creator-id="<%= data.creator.id %>"
+                <%= data.creator.isOwnProfile ? 'disabled' : '' %>>
+            <%= data.creator.isOwnProfile ? 'Your Profile' : data.creator.isFollowing ? 'Unfollow' : 'Follow' %>
+        </button>
+        <button class="share-btn">Share</button>
+    </div>
+
+    <div class="slider-container">
+        <h2>Characters</h2>
+        <% if (data.characters && data.characters.length > 0) { %>
+            <% data.characters.forEach(char => { %>
+                <div class="character-card" data-char-id="<%= char.id %>">
+                    <img src="<%= char.link %>" alt="<%= char.name %>">
+                    <div class="character-info">
+                        <h3><%= char.name %></h3>
+                        <div class="tag-container">
+                            <% const tags = Array.isArray(char.tags) ? char.tags.filter(tag => tag.trim()).slice(0, 2) : [];
+                                tags.forEach(tag => { %>
+                                    <span class="tag">@<%= tag %></span>
+                            <% }); %>
+                        </div>
+                        <p class="relationships"><%= char.relationships %></p>
+                        <div class="stats">
+                            <span class="stat">Views: <%= char.viewCount %></span>
+                            <span class="stat">Likes: <%= char.likeCount %></span>
+                        </div>
+                        <button class="like-button <%= char.liked ? 'liked' : '' %>" data-char-id="<%= char.id %>">
+                            <span class="like-count"><%= char.likeCount %></span> Likes
+                        </button>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <p>No characters available.</p>
+        <% } %>
+    </div>
+ <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    
+    <script src="/js/workingfb.js"></script>
+    <script src="/js/creator.js"></script>
 </body>
-
 </html>

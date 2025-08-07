@@ -1,26 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aiova - Discover</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Nunito:wght@400;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dis.css">
+
+
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="navbar-brand">Aiova - Discover</div>
         <button class="navbar-toggle"><i class="fas fa-bars"></i></button>
         <ul class="navbar-nav">
-            <li><a href="/make/u/" class="nav-link" data-target="/make/u/">Create</a></li>
-            <li><a href="/dis/u/" class="nav-link active" data-target="/dis/u/">Discover</a></li>
-            <li><a href="/post/u/" class="nav-link" data-target="/post/u/">Post</a></li>
-            <li><a href="/view/u/" class="nav-link" data-target="/view/u/">Home</a></li>
+            <li  onclick="ret()"><a class="nav-link" data-target="/make/u/">Create</a></li>
+            <li onclick="ret1()"><a href="/dis/u/" class="nav-link active" data-target="/dis/u/">Discover</a></li>
+            <li onclick="ret2()"><a href="/post/u/" class="nav-link" data-target="/post/u/">Post</a></li>
+            <li onclick="ret3()"><a href="/view/u/" class="nav-link" data-target="/view/u/">Home</a></li>
         </ul>
+        <script>
+            let ret =()=>{
+                window.location.href=`/make/u/${localStorage.getItem('id')}`
+            }
+             let ret1 =()=>{
+                window.location.href=`/dis/u/${localStorage.getItem('id')}`
+            }
+             let ret2 =()=>{
+                window.location.href=`/post/u/${localStorage.getItem('id')}`
+            }
+             let ret3 =()=>{
+                window.location.href=`/view/u/${localStorage.getItem('id')}`
+            }
+        </script>
         <div class="navbar-actions">
-            <button id="themeToggle" class="theme-toggle" title="Toggle Theme" aria-label="Toggle between dark and light theme">
+            <button id="themeToggle" class="theme-toggle" title="Toggle Theme"
+                aria-label="Toggle between dark and light theme">
                 <i class="fas fa-moon"></i> <!-- Will be updated by JS based on theme -->
             </button>
         </div>
@@ -28,13 +48,8 @@
 
     <!-- Main Content -->
     <div class="container">
-        <input
-            type="text"
-            id="searchBox"
-            class="search-bar"
-            placeholder="Search by name or tag..."
-            aria-label="Search for characters or tags"
-        >
+        <input type="text" id="searchBox" class="search-bar" placeholder="Search by name or tag..."
+            aria-label="Search for characters or tags">
         <div class="grid" id="cardContainer">
             <!-- Cards will be dynamically populated by JavaScript -->
         </div>
@@ -50,6 +65,11 @@
     </div>
 
     <!-- Scripts -->
+
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script defer src="/js/firebase.js"></script>
     <script src="/js/dis.js"></script>
 </body>
+
 </html>
