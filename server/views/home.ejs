@@ -86,9 +86,15 @@
     <div class="sidebar-content">
       <ul>
         <li>
-          <a href="#" onclick="navigateHome()">
+          <a href="#" onclick="navigateHome()" class="tab-btn active" onclick="showSection('all-posts')">
             <i class="fas fa-home"></i>
             <span>Home</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="showSection('my-posts')" class="tab-btn">
+            <i class="fas fa-user"></i>
+            <span>My Posts</span>
           </a>
         </li>
         <li>
@@ -144,13 +150,20 @@
   <main>
     <h2 class="font-orbitron">Aiova</h2>
     <input type="text" id="search-bar" placeholder="Search posts or characters..." />
-    <div id="post-feed">
-      <div id="loader" class="loader">
-        <span>Loading posts...</span>
+    <div class="section active" id="all-posts">
+      <div id="post-feed" class="post-list">
+        <div id="loader" class="loader">
+          <span>Loading posts...</span>
+        </div>
       </div>
     </div>
-  </main>
-
+    <div class="section" id="my-posts">
+      <div id="my-posts-list" class="post-list"></div>
+    </div>
+    <div class="section" id="notifications">
+      <div id="notification-list"></div>
+    </div>
+    
   <!-- Logout Popup -->
   <div id="logout-popup" class="logout-popup">
     <div class="logout-popup-content">
@@ -170,6 +183,164 @@
     </div>
   </div>
 
+  <!-- Floating AI Chat -->
+  <div id="ai-chat-btn" title="Ask AI">💬</div>
+  <div id="ai-chat-box">
+    <div id="ai-chat-header">
+      <span>Ask Hina</span>
+      <button id="close-chat">×</button>
+    </div>
+    <div id="ai-chat-messages"></div>
+    <div id="ai-chat-input">
+      <input type="text" id="ai-input" placeholder="Type your question..." />
+      <button id="send-msg">➤</button>
+    </div>
+  </div>
+  <style>
+    /* Floating Button */
+    #ai-chat-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 58px;
+      height: 58px;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      z-index: 9999;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    #ai-chat-btn:hover {
+      transform: scale(1.12);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Chat Box */
+    #ai-chat-box {
+      position: fixed;
+      bottom: 90px;
+      right: 20px;
+      width: 340px;
+      max-height: 480px;
+      background: var(--bg-color, #ffffff);
+      color: var(--text-color, #111827);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 10000;
+      animation: fadeInUp 0.3s ease;
+    }
+
+    /* Smooth fade-in */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Header */
+    #ai-chat-header {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: white;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    #ai-chat-header button {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    #ai-chat-header button:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Messages */
+    #ai-chat-messages {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      font-size: 14px;
+      line-height: 1.4;
+      background: var(--chat-bg, #f9fafb);
+    }
+
+    #ai-chat-messages div {
+      margin-bottom: 8px;
+    }
+
+    #ai-chat-messages strong {
+      color: var(--accent-color, #4f46e5);
+    }
+
+    /* Input */
+    #ai-chat-input {
+      display: flex;
+      border-top: 1px solid #e5e7eb;
+      background: var(--bg-color, #ffffff);
+    }
+
+    #ai-input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: inherit;
+    }
+
+    #send-msg {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 0 16px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    #send-msg:hover {
+      background: #4338ca;
+    }
+
+    /* Dark mode adjustments */
+    body.dark-mode #ai-chat-box {
+      --bg-color: #1f2937;
+      --text-color: #f9fafb;
+      --chat-bg: #111827;
+    }
+
+    body.dark-mode #ai-chat-messages strong {
+      --accent-color: #a5b4fc;
+    }
+
+
+    
+  </style>
   <!-- Login Notification Popup -->
   <div id="login-notification" class="notification-popup">
     <p id="login-notification-message"></p>
@@ -182,9 +353,45 @@
   <script src="/js/home.js"></script>
   <script src="/js/firebase.js"></script>
   <script>
-    currentUser={
-      id : localStorage.getItem('id')
+    document.getElementById("ai-chat-btn").addEventListener("click", () => {
+      document.getElementById("ai-chat-box").style.display = "flex";
+    });
+    document.getElementById("close-chat").addEventListener("click", () => {
+      document.getElementById("ai-chat-box").style.display = "none";
+    });
+    document.getElementById("send-msg").addEventListener("click", sendMessage);
+    document.getElementById("ai-input").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    function sendMessage() {
+      let input = document.getElementById("ai-input");
+      let msg = input.value.trim();
+      if (!msg) return;
+      appendMessage("You", msg);
+      input.value = "";
+      fetch("/api/ask-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: msg })
+      })
+        .then(res => res.json())
+        .then(data => appendMessage("AI", data.reply))
+        .catch(() => appendMessage("AI", "Error connecting to AI server."));
     }
+
+    function appendMessage(sender, text) {
+      let chat = document.getElementById("ai-chat-messages");
+      let msgDiv = document.createElement("div");
+      msgDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+      chat.appendChild(msgDiv);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    currentUser = {
+      id: localStorage.getItem('id')
+    };
+
     function navigateHome() {
       const id = currentUser.id;
       if (id && window.location.pathname !== `/view/u/${id}`) {
@@ -200,10 +407,7 @@
     }
 
     function openNotifications() {
-      const id = currentUser.id;
-      if (id && window.location.pathname !== `/notify/u/${id}`) {
-        window.location.href = `/notify/u/${encodeURIComponent(id)}`;
-      }
+      showSection('notifications');
     }
 
     function plans() {
@@ -226,6 +430,11 @@
         window.location.href = `/post/u/${encodeURIComponent(id)}`;
       }
     }
+
+    function closePostPopup() {
+      document.getElementById('post-popup').classList.add('hidden');
+    }
   </script>
+</body>
 
 </html>

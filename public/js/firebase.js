@@ -21,14 +21,16 @@
             await waitForFirebaseSDK();
 
             // Firebase configuration
+            // For Firebase JS SDK v7.20.0 and later, measurementId is optional
             const firebaseConfig = {
-                apiKey: "AIzaSyA3_Otys41HjaAnDG8f2jFuzzuUJTiF-Po",
-                authDomain: "store-work-10c7d.firebaseapp.com",
-                projectId: "store-work-10c7d",
-                storageBucket: "store-work-10c7d.firebasestorage.app",
-                messagingSenderId: "364380068504",
-                appId: "1:364380068504:web:fe303c05a95bb777b6ceed",
-                measurementId: "G-DSG9XHW38R",
+                apiKey: "AIzaSyDMel1G4loc4diMPhbBD3ChBwCWKMOnVUE",
+                authDomain: "store-b16aa.firebaseapp.com",
+                databaseURL: "https://store-b16aa-default-rtdb.firebaseio.com",
+                projectId: "store-b16aa",
+                storageBucket: "store-b16aa.firebasestorage.app",
+                messagingSenderId: "52789071499",
+                appId: "1:52789071499:web:c977c6322759e29f9f4e8e",
+                measurementId: "G-DDQ9NHRVBY"
             };
 
             // Initialize Firebase

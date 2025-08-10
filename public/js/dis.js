@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="card-content">
                     <div class="card-image">
                         <div class="loader" id="card-image-loader-${character.id}"><div class="spinner"></div><span>Loading...</span></div>
-                        <img src="${character.link || `https://api.dicebear.com/7.x/bottts/svg?seed=${character.name}`}" width="140" height="140" class="avatar" data-char-id="${character.id}">
+                        <img  src="${character.link || `https://api.dicebear.com/7.x/bottts/svg?seed=${character.name}`}" width="140" height="140" class="avatar" data-char-id="${character.id}">
                     </div>
                     <div class="card-details">
                         <h3 class="character-name">${character.name || 'Unnamed Character'}</h3>

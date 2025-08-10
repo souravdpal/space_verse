@@ -19,13 +19,12 @@ const User = require('./models/User');
 const verifyFirebaseToken = require('./routes/verifyFirebaseToken');
 const Character = require('./models/Character');
 const app = express();
-
+const postmakerJS = require('./routes/Aipost')
 // Verify environment variables
-if (!process.env.IMAGEKIT_PUBLIC_KEY || !process.env.IMAGEKIT_PRIVATE_KEY) {
+/*if (!process.env.IMAGEKIT_PUBLIC_KEY || !process.env.IMAGEKIT_PRIVATE_KEY) {
   console.error('Fatal: Missing ImageKit credentials. Check .env file.');
   process.exit(1);
-}
-
+}*/
 // Set EJS as view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -217,10 +216,10 @@ app.get('/plans', async (req, res) => {
 
     console.log('🔎 User ID from query:', id);
 
-    const userId = id;
-    const existingKey = await ApiKey.findOne({ uid: userId });
-
-    console.log('🔐 Existing Key:', existingKey);
+    
+    const existingKey = await ApiKey.findOne({ userId: id });
+   
+    
 
     res.render('plans', { val: !!existingKey });
   } catch (error) {
@@ -278,6 +277,8 @@ app.get('/post/share', async (req, res) => {
 
 // Protected routes with verifyFirebaseToken middleware
 app.use('/', authRoutes);
+app.use('/' ,postmakerJS)
+app.use('/notify', verifyFirebaseToken,notifyUser);
 app.use('/', verifyFirebaseToken, imageRoutes);
 app.use('/', verifyFirebaseToken, postRoutes);
 app.use('/', verifyFirebaseToken, characterRoutes);
@@ -285,7 +286,6 @@ app.use('/', verifyFirebaseToken, creatorRoutes);
 app.use('/', verifyFirebaseToken, apiKeyRoutes);
 app.use('/', verifyFirebaseToken, chatRoutes);
 app.use('/py', verifyFirebaseToken, routeai);
-app.use('/', verifyFirebaseToken, notifyUser);
 app.use('/', verifyFirebaseToken, his);
 app.use('/', verifyFirebaseToken, followRoutes);
 

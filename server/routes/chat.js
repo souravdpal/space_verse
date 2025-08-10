@@ -17,8 +17,8 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // GET /history
 router.get('/history', async (req, res) => {
-    const { user_id, char_id, uid } = req.query;
-    let userIdHeader = user_id
+    const { user_id, char_id, uid, offset = 0, limit = 10 } = req.query;
+    let userIdHeader = user_id;
 
     // Validate inputs
     if (!user_id || !char_id || !uid) {
@@ -36,7 +36,10 @@ router.get('/history', async (req, res) => {
             .eq('user_id', user_id)
             .eq('char_id', char_id)
             .order('timestamp', { ascending: false })
-            .limit(200);
+            .range(
+                parseInt(offset),
+                parseInt(offset) + parseInt(limit) - 1
+            );
 
         if (error) {
             console.error('Supabase query error:', error);
@@ -49,5 +52,6 @@ router.get('/history', async (req, res) => {
         res.status(500).json({ error: 'Internal server error', details: err.message });
     }
 });
+
 
 module.exports = router;

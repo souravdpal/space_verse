@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +11,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <!-- Font Awesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-xxxx" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-xxxx" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body {
             background: url("https://images.unsplash.com/photo-1464802686167-b939a6910659") no-repeat center center fixed;
@@ -18,6 +20,7 @@
             color: #e0e7ff;
             overflow: hidden;
         }
+
         canvas {
             position: fixed;
             top: 0;
@@ -26,54 +29,86 @@
             height: 100%;
             z-index: 0;
         }
+
         .content {
             position: relative;
             z-index: 1;
         }
+
         .card-shadow {
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(10px);
             background: rgba(17, 24, 39, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
         @keyframes fadeIn {
-            0% { opacity: 0; transform: scale(0.9); }
-            100% { opacity: 1; transform: scale(1); }
+            0% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
+
         .animate-fade-in {
             animation: fadeIn 1.2s ease-out;
         }
+
         @keyframes progress {
-            0% { width: 0%; box-shadow: 0 0 5px rgba(79, 70, 229, 0.5); }
-            100% { width: 100%; box-shadow: 0 0 20px rgba(79, 70, 229, 1); }
+            0% {
+                width: 0%;
+                box-shadow: 0 0 5px rgba(79, 70, 229, 0.5);
+            }
+
+            100% {
+                width: 100%;
+                box-shadow: 0 0 20px rgba(79, 70, 229, 1);
+            }
         }
+
         .progress-bar {
             animation: progress 3s ease-out forwards;
         }
+
         @keyframes rotatePlanet {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
+
         .animate-rotate {
             animation: rotatePlanet 15s linear infinite;
         }
+
         @media (max-width: 640px) {
             .card-shadow {
                 padding: 1.5rem;
             }
+
             h1 {
                 font-size: 2rem;
             }
+
             .planet-img {
                 width: 16px;
                 height: 16px;
             }
+
             .progress-container {
                 height: 3px;
             }
         }
     </style>
 </head>
+
 <body class="min-h-screen flex items-center justify-center p-4 relative">
     <!-- Particle Canvas -->
     <canvas id="stars"></canvas>
@@ -81,7 +116,8 @@
     <!-- Welcome Content -->
     <div class="content card-shadow rounded-xl p-6 max-w-md w-full text-center animate-fade-in">
         <h1 class="text-4xl font-bold text-indigo-400 mb-4">Welcome to the Cosmos! 🌌</h1>
-        <img src="https://img.icons8.com/color/96/000000/planet.png" alt="Planet" class="w-20 h-20 mx-auto mb-4 animate-rotate planet-img" />
+        <img src="https://img.icons8.com/color/96/000000/planet.png" alt="Planet"
+            class="w-20 h-20 mx-auto mb-4 animate-rotate planet-img" />
         <p id="welcome-message" class="text-gray-300 mb-6 text-lg">Initializing warp drive...</p>
         <div class="w-full bg-gray-700 rounded-full h-4 progress-container mb-4 overflow-hidden">
             <div id="progress-bar" class="bg-indigo-400 h-4 rounded-full progress-bar"></div>
@@ -92,17 +128,19 @@
     </div>
 
     <script>
-        
+
         // Firebase Configuration (Updated to latest version compatibility)
         const firebaseConfig = {
-            apiKey: "AIzaSyA3_Otys41HjaAnDG8f2jFuzzuUJTiF-Po",
-            authDomain: "store-work-10c7d.firebaseapp.com",
-            projectId: "store-work-10c7d",
-            storageBucket: "store-work-10c7d.firebasestorage.app",
-            messagingSenderId: "364380068504",
-            appId: "1:364380068504:web:fe303c05a95bb777b6ceed",
-            measurementId: "G-DSG9XHW38R",
+            apiKey: "AIzaSyDMel1G4loc4diMPhbBD3ChBwCWKMOnVUE",
+            authDomain: "store-b16aa.firebaseapp.com",
+            databaseURL: "https://store-b16aa-default-rtdb.firebaseio.com",
+            projectId: "store-b16aa",
+            storageBucket: "store-b16aa.firebasestorage.app",
+            messagingSenderId: "52789071499",
+            appId: "1:52789071499:web:c977c6322759e29f9f4e8e",
+            measurementId: "G-DDQ9NHRVBY"
         };
+
 
         // Initialize Firebase
         let auth;
@@ -212,4 +250,5 @@
         }
     </script>
 </body>
+
 </html>

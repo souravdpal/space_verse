@@ -19,23 +19,23 @@
         <div class="navbar-brand">Aiova - Discover</div>
         <button class="navbar-toggle"><i class="fas fa-bars"></i></button>
         <ul class="navbar-nav">
-            <li  onclick="ret()"><a class="nav-link" data-target="/make/u/">Create</a></li>
+            <li onclick="ret()"><a class="nav-link" data-target="/make/u/">Create</a></li>
             <li onclick="ret1()"><a href="/dis/u/" class="nav-link active" data-target="/dis/u/">Discover</a></li>
             <li onclick="ret2()"><a href="/post/u/" class="nav-link" data-target="/post/u/">Post</a></li>
             <li onclick="ret3()"><a href="/view/u/" class="nav-link" data-target="/view/u/">Home</a></li>
         </ul>
         <script>
-            let ret =()=>{
-                window.location.href=`/make/u/${localStorage.getItem('id')}`
+            let ret = () => {
+                window.location.href = `/make/u/${localStorage.getItem('id')}`
             }
-             let ret1 =()=>{
-                window.location.href=`/dis/u/${localStorage.getItem('id')}`
+            let ret1 = () => {
+                window.location.href = `/dis/u/${localStorage.getItem('id')}`
             }
-             let ret2 =()=>{
-                window.location.href=`/post/u/${localStorage.getItem('id')}`
+            let ret2 = () => {
+                window.location.href = `/post/u/${localStorage.getItem('id')}`
             }
-             let ret3 =()=>{
-                window.location.href=`/view/u/${localStorage.getItem('id')}`
+            let ret3 = () => {
+                window.location.href = `/view/u/${localStorage.getItem('id')}`
             }
         </script>
         <div class="navbar-actions">
@@ -63,6 +63,7 @@
             <p id="modalDetails"></p>
         </div>
     </div>
+   
 
     <!-- Scripts -->
 
