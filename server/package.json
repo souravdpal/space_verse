@@ -19,6 +19,7 @@
     "express": "^5.1.0",
     "firebase-admin": "^13.4.0",
     "fs": "^0.0.1-security",
+    "groq-sdk": "^0.30.0",
     "imagekit": "^6.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.17.0",

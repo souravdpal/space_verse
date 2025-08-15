@@ -140,20 +140,22 @@
         <!-- Error Message -->
         <p id="error-message" class="text-red-400 text-center hidden"></p>
     </div>
-
+    <script src="/js/uuid_gen.js"></script>
     <script>
+         let uuid = window.idget()
+        //console.log(uuid)
         // Firebase Configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
-            apiKey: "AIzaSyDMel1G4loc4diMPhbBD3ChBwCWKMOnVUE",
-            authDomain: "store-b16aa.firebaseapp.com",
-            databaseURL: "https://store-b16aa-default-rtdb.firebaseio.com",
-            projectId: "store-b16aa",
-            storageBucket: "store-b16aa.firebasestorage.app",
-            messagingSenderId: "52789071499",
-            appId: "1:52789071499:web:c977c6322759e29f9f4e8e",
-            measurementId: "G-DDQ9NHRVBY"
+            apiKey: "AIzaSyA3_Otys41HjaAnDG8f2jFuzzuUJTiF-Po",
+            authDomain: "store-work-10c7d.firebaseapp.com",
+            databaseURL: "https://store-work-10c7d-default-rtdb.firebaseio.com",
+            projectId: "store-work-10c7d",
+            storageBucket: "store-work-10c7d.firebasestorage.app",
+            messagingSenderId: "364380068504",
+            appId: "1:364380068504:web:fe303c05a95bb777b6ceed",
+            measurementId: "G-DSG9XHW38R"
         };
-
 
         // Initialize Firebase
         let auth;
@@ -237,12 +239,13 @@
 
                     saveUser(user).then((response) => {
                         console.log("User saved:", response);
-                        setTimeout(() => window.location.href = `/view/u/${user.uid}`, 1000);
+                        
+                        setTimeout(() => window.location.href = `/view/u/${uuid}`, 1000);
                     }).catch((error) => {
                         console.error("Error saving user:", error.message);
                         if (error.message.includes("User already exists")) {
                             displayError("User already exists. Redirecting...");
-                            setTimeout(() => window.location.href = `/view/u/${user.uid}`, 3000);
+                            setTimeout(() => window.location.href = `/view/u/${uuid}`, 3000);
                         } else {
                             displayError("Sign-in save failed. Redirecting...");
                             localStorage.clear();
@@ -310,11 +313,11 @@
                     localStorage.setItem("user", user.displayName || user.email || "Unknown");
                     localStorage.setItem("email", user.email || "");
                     saveUser(user).then(() => {
-                        window.location.href = `/view/u/${user.uid}`;
+                        window.location.href = `/view/u/${uuid}`;
                     }).catch((error) => {
                         console.error("Error on auth state change:", error.message);
                         if (error.message.includes("User already exists")) {
-                            window.location.href = `/view/u/${user.uid}`;
+                            window.location.href = `/view/u/${uuid}`;
                         } else {
                             displayError("Authentication error. Redirecting...");
                             localStorage.clear();

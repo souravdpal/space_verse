@@ -7,6 +7,12 @@
     <title>API Key Management & Premium Plans</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/plans.css">
+    <link rel="stylesheet" href="/css/hina.css">
+    <script src="/js/uuid_gen.js" defer></script>
+        <script src="/js/uuid_gen.js"></script>
+    <script src="/js/uuid_gen.js"></script>
+
+
 </head>
 
 <body class="bg-gray-900 text-white font-sans">
@@ -184,33 +190,57 @@
                     <p class="font-semibold">Token already added.</p>
                     <p class="text-sm text-gray-200">You have already submitted your key. Access is granted.</p>
                 </div>
-            <% } else { %>
-                <a href="https://console.groq.com/keys" target="_blank"
-                    class="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg mb-6 transition duration-300">
-                    Get Your Key
-                </a>
-                <label for="apiKeyInput" class="block text-sm font-medium mb-2">Enter Your API Key:</label>
-                <input type="text" id="apiKeyInput"
-                    class="w-full bg-gray-700 text-white rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Paste your Groq API key here">
-                <button id="submitKeyBtn"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-300">
-                    Submit Key
-                </button>
-            <% } %>
+                <script>
+                    const raid = window.idget()
+                    console.log(raid)
+                    const newUrl = `/plans` + '?uid=' + raid +'token=true'
+                    window.history.replaceState({}, "", newUrl);
 
-            <div id="successMessage" class="hidden mt-4 p-4 bg-green-600 rounded-lg">
-                <p class="font-semibold">Success! Your temporary key has been saved.</p>
-                <p>
-                    You now have access to the <strong>Freeium Plan</strong> with extended limits,
-                    including voice calling and text models (e.g., Whisper).
-                    Usage is limited daily—upgrade to Premium or wait for the next day when limits reset.
-                </p>
-            </div>
+
+                </script>
+                <% } else { %>
+                    <a href="https://console.groq.com/keys" target="_blank"
+                        class="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg mb-6 transition duration-300">
+                        Get Your Key
+                    </a>
+                    <label for="apiKeyInput" class="block text-sm font-medium mb-2">Enter Your API Key:</label>
+                    <input type="text" id="apiKeyInput"
+                        class="w-full bg-gray-700 text-white rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Paste your Groq API key here">
+                    <button id="submitKeyBtn"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-300">
+                        Submit Key
+                    </button>
+                    <% } %>
+
+                        <div id="successMessage" class="hidden mt-4 p-4 bg-green-600 rounded-lg">
+                            <p class="font-semibold">Success! Your temporary key has been saved.</p>
+                            <p>
+                                You now have access to the <strong>Freeium Plan</strong> with extended limits,
+                                including voice calling and text models (e.g., Whisper).
+                                Usage is limited daily—upgrade to Premium or wait for the next day when limits reset.
+                            </p>
+                        </div>
         </div>
     </div>
+
+    <!-- Floating AI Chat -->
+    <div id="ai-chat-btn" title="Ask AI">💬</div>
+    <div id="ai-chat-box">
+        <div id="ai-chat-header">
+            <span>Ask Hina</span>
+            <button id="close-chat">×</button>
+        </div>
+        <div id="ai-chat-messages"></div>
+        <div id="ai-chat-input">
+            <input type="text" id="ai-input" placeholder="Type your question..." />
+            <button id="send-msg">➤</button>
+        </div>
+    </div>
+
 
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <script src="/js/firebase.js"></script>
+    <script src="/js/hina.js"></script>
     <script src="/js/plans.js"></script>

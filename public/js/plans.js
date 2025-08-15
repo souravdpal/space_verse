@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // Wait for Firebase SDK and initialization
+    const raid = window.idget()
+    console.log(raid)
+    const newUrl = `/plans` + '?uid=' + raid + 'token=true'
+    window.history.replaceState({}, "", newUrl);
     const waitForFirebase = () => {
         return new Promise((resolve, reject) => {
             const checkFirebase = () => {
@@ -14,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             checkFirebase();
         });
     };
+
 
     try {
         await waitForFirebase(); // Ensure Firebase SDK and app are initialized
@@ -107,6 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 successMessage.classList.remove('hidden');
                 apiKeyInput.value = '';
                 console.log(data.msg);
+                window.history.pushState({}, "", `/plans/u/${window.idget()}`);
                 let APImsg = `User, you have added an API ${apiKey.slice(0, 7)}..., now you can have fun and use more features, but it's limited. For more, get premium.`;
                 addNotification(userId, APImsg, "API");
                 window.location.href = '/home';

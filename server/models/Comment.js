@@ -10,6 +10,7 @@ const commentSchema = new mongoose.Schema({
   likedBy: [{ type: String }],
   replyTo: { type: String, default: null },
   createdAt: { type: Date, default: Date.now },
+  link:  {type : String ,default : null   }
 });
 
 module.exports = mongoose.model('Comment', commentSchema);

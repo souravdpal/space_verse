@@ -41,9 +41,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             showToast('Error: Invalid navigation target');
             return;
         }
-        if (id) {
+        let uuidgen = window.idget()
+        if (uuidgen) {
             setTimeout(() => {
-                window.location.href = `${target}${encodeURIComponent(id)}`;
+                window.location.href = `${target}${uuidgen}`;
             }, 1000);
         } else {
             console.error("No user ID found");

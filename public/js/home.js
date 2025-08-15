@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    let uuid = window.idget()
+    console.log(uuid)
     // Utility to sanitize strings and remove HTML tags
     function sanitizeHTML(str) {
         if (!str) return '';
@@ -7,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         div.innerHTML = str;
         return div.textContent || div.innerText || '';
     }
-
+  
     // Replace placeholder images
     function replacePlaceholderImages(img) {
         if (img.src.includes('via.placeholder.com') || img.src.includes('api.dicebear.com')) {
@@ -61,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Current User
     let currentUser = { user: 'Unknown', id: null };
-
     // State
     let filteredPosts = [];
     let myPosts = [];
@@ -121,6 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.firebaseAuth.logout();
                 return null;
             }
+            let urname=response.name
+            localStorage.setItem('username' , urname)
+            
             let photoUrl = response.photo || 'https://ik.imagekit.io/souravdpal/default-avatar.png';
             elements.userPhoto.forEach(img => {
                 img.src = photoUrl;
@@ -270,54 +274,30 @@ document.addEventListener('DOMContentLoaded', () => {
         viewedPosts[postId] = (viewedPosts[postId] || 0) + 1;
         localStorage.setItem('viewedPosts', JSON.stringify(viewedPosts));
     }
-
-    // Fetch comments
+    // Fetch comments for a post
     async function fetchComments(postId) {
         try {
-            const response = await window.firebaseAuth.sendWithFreshToken('/com', {
+            const comments = await window.firebaseAuth.sendWithFreshToken('/com', {
                 method: 'POST',
                 body: JSON.stringify({ query: postId })
             });
-            return response.map(comment => ({
-                id: comment._id,
-                user: comment.authorName,
-                photo: comment.authorPhoto || 'https://ik.imagekit.io/souravdpal/default-avatar.png',
-                content: sanitizeHTML(comment.content), // Strip HTML tags
-                likes: comment.likes || 0,
-                likedBy: comment.likedBy || [],
-                replyTo: comment.replyTo || null,
-                community: comment.community,
-                createdAt: new Date(comment.createdAt)
+
+            return comments.map(c => ({
+                id: c._id,
+                user: c.authorName,
+                authorId: c.authorId,
+                photo: c.link ? c.link : (c.authorPhoto || 'https://ik.imagekit.io/souravdpal/default-avatar.png'),
+                content: c.content,
+                likes: c.likes || 0,
+                likedBy: c.likedBy || [],
+                createdAt: c.createdAt
             }));
-        } catch (error) {
-            console.error('Error fetching comments:', error.message);
-            if (error.message.includes('Unauthorized')) window.firebaseAuth.logout();
+        } catch (err) {
+            console.error('Error fetching comments:', err);
             return [];
         }
     }
 
-    // Clean comment content
-    function cleanCommentContent(content) {
-        const tagPattern = /@(\w+)/g;
-        const seenTags = new Set();
-        let cleanedContent = content.replace(tagPattern, (match, username) => {
-            if (seenTags.has(username)) return '';
-            seenTags.add(username);
-            return `@${username}`;
-        });
-        return sanitizeHTML(cleanedContent.trim()); // Strip HTML tags
-    }
-
-    // Filter posts
-    function filterPosts(posts, query) {
-        if (!query.trim()) return posts;
-        const lowerQuery = query.toLowerCase();
-        return posts.filter(post =>
-            post.content.toLowerCase().includes(lowerQuery) ||
-            post.user.toLowerCase().includes(lowerQuery) ||
-            post.community.toLowerCase().includes(lowerQuery)
-        );
-    }
 
     // Render posts
     function renderPosts(append = false) {
@@ -372,154 +352,137 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    window.history.replaceState({}, "", `/home/${encodeURI(localStorage.getItem('username'))}`);
 
     // Create post element
-    function createPostElement(post) {
+    function  createPostElement(post) {
         const isCurrentUser = currentUser.id === post.authorId;
         const areCommentsVisible = commentVisibility.get(post.id) || false;
         const postDiv = document.createElement('div');
         postDiv.className = 'post-card';
+
+        const highlightTags = (text) => {
+            return text.replace(/@([A-Za-z0-9_]+)/g, (match, username) => {
+                const displayName = username.replace(/_/g, ' ');
+                return `<span class="tag" data-username="${displayName}" style="color:#3b82f6;cursor:pointer;">@${displayName}</span>`;
+            });
+        };
+
         postDiv.innerHTML = `
-            <div class="flex items-start gap-4">
-                <div class="profile-img">
-                    <img loading="lazy" src="${post.photo || 'https://ik.imagekit.io/souravdpal/default-avatar.png'}" alt="${sanitizeHTML(post.user)}'s profile image">
-                </div>
-                <div class="flex-grow">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="font-semibold text-blue-600 text-sm">${sanitizeHTML(post.user)}</span>
-                        <span class="com-p text-gray-500 text-xs capitalize bg-gray-700 px-2 py-0.5 rounded-full">${sanitizeHTML(post.community)}</span>
-                        <span class="text-gray-400 text-xs">${formatTime(post.createdAt)}</span>
-                    </div>
-                    <p class="text-gray-200 text-sm mb-2">${post.content}</p>
-                    ${post.image ? `
-                        <div class="post-image-container">
-                            <img loading="lazy" src="${post.image}" alt="Post image" class="post-image">
-                        </div>
-                    ` : ''}
-                    <div class="flex gap-3 mb-3">
-                        <button class="like-btn flex items-center gap-1 text-gray-400 text-sm ${post.likedBy.includes(currentUser.id) ? 'liked' : ''}" data-id="${post.id}" data-community="${post.community}" data-tooltip="Like">
-                            <i class="fas fa-heart"></i>
-                            <span>${post.likes || 0}</span>
-                        </button>
-                        <button class="comment-btn flex items-center gap-1 text-gray-400 text-sm" data-id="${post.id}" data-tooltip="${areCommentsVisible ? 'Hide Comments' : 'Show Comments'}">
-                            <i class="fas fa-comment"></i>
-                            <span>${post.commentCount}</span>
-                        </button>
-                        <button class="share-btn flex items-center gap-1 text-gray-400 text-sm" data-id="share?uid=${currentUser.id}&post=${post.id}" data-tooltip="Share">
-                            <i class="fas fa-share"></i>
-                            <span>Share</span>
-                        </button>
-                    </div>
-                    <div class="comment-form ${areCommentsVisible ? '' : 'hidden'}">
-                        <textarea class="w-full bg-gray-700 text-gray-200 p-2 rounded-lg text-sm" rows="2" placeholder="Add a comment or reply with @username..."></textarea>
-                        <button class="bg-blue-600 text-white py-1 px-3 rounded-lg mt-1 text-sm">Submit</button>
-                    </div>
-                    <div class="comments ${areCommentsVisible ? '' : 'hidden'}">
-                        ${post.commentCount > 0 ? `
-                            <button class="show-all-comments-btn text-blue-600 text-xs">${areCommentsVisible ? `Hide ${post.commentCount} comments` : `Show ${post.commentCount} comments`}</button>
-                        ` : ''}
-                    </div>
-                </div>
+    <div class="flex items-start gap-4">
+        <div class="profile-img">
+            <img loading="lazy" src="${post.photo || 'https://ik.imagekit.io/souravdpal/default-avatar.png'}" alt="${sanitizeHTML(post.user)}">
+        </div>
+        <div class="flex-grow">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="font-semibold text-blue-600 text-sm">${sanitizeHTML(post.user)}</span>
+                <span class="com-p text-gray-500 text-xs capitalize bg-gray-700 px-2 py-0.5 rounded-full">${sanitizeHTML(post.community)}</span>
+                <span class="text-gray-400 text-xs">${formatTime(post.createdAt)}</span>
             </div>
-        `;
-
-        const comP = postDiv.querySelector('.com-p');
-        if (comP) {
-            comP.style.cursor = 'pointer';
-            comP.style.transition = 'background-color 0.2s ease, transform 0.15s ease';
-            comP.style.position = 'relative';
-
-            const tooltip = document.createElement('div');
-            tooltip.textContent = `Talk to ${post.user}`;
-            tooltip.style.cssText = `
-                position: absolute;
-                bottom: 125%;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #111827;
-                color: #fff;
-                padding: 4px 8px;
-                border-radius: 6px;
-                font-size: 0.75rem;
-                white-space: nowrap;
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity 0.2s ease;
-                z-index: 9999;
-            `;
-            const arrow = document.createElement('div');
-            arrow.style.cssText = `
-                position: absolute;
-                top: 100%;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 0;
-                height: 0;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 5px solid #111827;
-            `;
-            tooltip.appendChild(arrow);
-            comP.appendChild(tooltip);
-
-            comP.addEventListener('mouseenter', () => {
-                comP.style.backgroundColor = '#2563eb';
-                comP.style.color = '#ffffff';
-                comP.style.transform = 'scale(1.05)';
-                tooltip.style.opacity = '1';
-            });
-            comP.addEventListener('mouseleave', () => {
-                comP.style.backgroundColor = '#374151';
-                comP.style.color = '';
-                comP.style.transform = 'scale(1)';
-                tooltip.style.opacity = '0';
-            });
-            comP.addEventListener('click', () => {
-                const content = comP.textContent.trim();
-                if (content.startsWith('@') && content.length > 1) {
-                    window.location.href = `/chat/c/${post.authorId}`;
-                }
-            });
-        }
-
-        const likeBtn = postDiv.querySelector('.like-btn');
-        likeBtn.addEventListener('click', async () => {
-            if (!currentUser.id) {
-                window.location.href = '/login';
-                return;
-            }
-            try {
-                const postId = likeBtn.getAttribute('data-id');
-                const community = likeBtn.getAttribute('data-community');
-                const isAIPost = community === '@AICharacters';
-                const endpoint = isAIPost ? `/api/aiposts/${postId}/like?uid=${currentUser.id}` : `/api/posts/${postId}/like/${currentUser.id}`;
-                const response = await window.firebaseAuth.sendWithFreshToken(endpoint, { method: 'POST' });
-                const targetArray = isAIPost ? filteredPosts : (elements.postFeed.contains(likeBtn) ? filteredPosts : myPosts);
-                const post = targetArray.find(p => p.id === postId);
-                if (post) {
-                    post.likes = response.likes !== undefined ? response.likes : response.likeCount || 0;
-                    post.likedBy = response.likedBy || [];
-                    renderPosts();
-                    renderMyPosts();
-                }
-            } catch (error) {
-                console.error('Error liking post:', error.message);
-                showToast('Failed to like post.');
-                if (error.message.includes('Unauthorized')) window.firebaseAuth.logout();
-            }
-        });
-
+            <p class="text-gray-200 text-sm mb-2">${post.content}</p>
+            ${post.image ? `<div class="post-image-container"><img loading="lazy" src="${post.image}" class="post-image"></div>` : ''}
+            <div class="flex gap-3 mb-3">
+                <button class="like-btn flex items-center gap-1 text-gray-400 text-sm ${post.likedBy.includes(currentUser.id) ? 'liked' : ''}" data-id="${post.id}" data-community="${post.community}">
+                    <i class="fas fa-heart"></i>
+                    <span>${post.likes || 0}</span>
+                </button>
+                <button class="comment-btn flex items-center gap-1 text-gray-400 text-sm" data-id="${post.id}">
+                    <i class="fas fa-comment"></i>
+                    <span>${post.commentCount}</span>
+                </button>
+            </div>
+            <div class="comment-form ${areCommentsVisible ? '' : 'hidden'}">
+                <textarea class="w-full bg-gray-700 text-gray-200 p-2 rounded-lg text-sm" rows="2" placeholder="Add a comment or reply with @username..."></textarea>
+                <button class="bg-blue-600 text-white py-1 px-3 rounded-lg mt-1 text-sm">Submit</button>
+            </div>
+            <div class="comments ${areCommentsVisible ? '' : 'hidden'}"></div>
+        </div>
+    </div>
+    `;
         const commentBtn = postDiv.querySelector('.comment-btn');
+
         commentBtn.addEventListener('click', async () => {
             const isVisible = commentVisibility.get(post.id) || false;
+
             if (!isVisible) {
+                // Load comments only when opening
                 post.comments = await fetchComments(post.id);
+
+                const commentsDiv = postDiv.querySelector('.comments');
+                commentsDiv.innerHTML = post.comments.map(c => `
+                    
+            <div class="comment-item flex items-start gap-3 p-3 border-b border-gray-800 hover:bg-gray-800/40 transition rounded-lg">
+                <img src="${c.photo}" alt="${c.user}" class="w-10 h-10 rounded-full object-cover shadow-md border border-gray-700">
+
+                <div class="flex flex-col flex-grow">
+                    <div class="flex items-center gap-2">
+                        <strong class="text-sm text-white">${sanitizeHTML(c.user)}</strong>
+                        <span class="text-xs text-gray-500">${formatTime(c.createdAt)}</span>
+                    </div>
+
+                    <div class="text-sm text-gray-300 mt-1">
+                        ${highlightTags(sanitizeHTML(c.content))}
+                    </div>
+
+                    <div class="flex items-center gap-4 mt-2">
+                        <button 
+                            class="comment-like-btn flex items-center gap-1 text-sm transition ${c.likedBy.includes(currentUser.id) ? 'text-red-500' : 'text-gray-400'
+                    }" 
+                            data-id="${c.id}">
+                            <i class="fas fa-heart"></i>
+                            <span class="like-count">${c.likes || 0}</span>
+                        </button>
+                        <button class="reply-btn text-gray-400 text-sm hover:text-blue-400 transition">
+                            <i class="fas fa-reply"></i> Reply
+                        </button>
+                    </div>
+                </div>
+              
+            </div>
+             
+        `).join('');
+
+                // Attach like handlers
+                commentsDiv.querySelectorAll('.comment-like-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const commentId = btn.dataset.id;
+                        try {
+                            const data = await window.firebaseAuth.sendWithFreshToken(
+                                `/api/comments/${commentId}/like?userId=${localStorage.getItem('id')}`,
+                                { method: 'POST' }
+                            );
+
+                            btn.querySelector('.like-count').textContent = data.likes;
+                            if (data.likedBy.includes(currentUser.id)) {
+                                btn.classList.add('text-red-500');
+                                btn.classList.remove('text-gray-400');
+                            } else {
+                                btn.classList.remove('text-red-500');
+                                btn.classList.add('text-gray-400');
+                            }
+                        } catch (err) {
+                            console.error('Error liking comment:', err);
+                            showToast('Failed to like comment.');
+                        }
+                    });
+                });
+               
+              commentsDiv.querySelectorAll('.tag').forEach (tagEl => {
+                    tagEl.addEventListener('click', () => {
+                        const username = tagEl.dataset.username;
+
+                        window.location.href = `/chat/u/${commentId}`;
+                    });
+                });
             }
+
+            // Toggle visibility
             commentVisibility.set(post.id, !isVisible);
-            renderPosts();
-            renderMyPosts();
+            postDiv.querySelector('.comment-form').classList.toggle('hidden', isVisible);
+            postDiv.querySelector('.comments').classList.toggle('hidden', isVisible);
         });
 
+        // Submit comment
         const commentForm = postDiv.querySelector('.comment-form');
         if (commentForm) {
             const commentText = commentForm.querySelector('textarea');
@@ -529,79 +492,61 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.location.href = '/login';
                     return;
                 }
-                if (commentText.value.trim()) {
-                    const content = cleanCommentContent(commentText.value);
-                    const replyMatch = content.match(/^@(\w+)/);
-                    try {
-                        const response = await window.firebaseAuth.sendWithFreshToken('/add/comment', {
+                const rawContent = commentText.value.trim();
+                if (!rawContent) return;
+
+                const firstTagMatch = rawContent.match(/@([A-Za-z0-9_]+)/);
+                let tagUser = null;
+                if (firstTagMatch) tagUser = firstTagMatch[1].replace(/_/g, ' ');
+
+                try {
+                    // Always send link: null for normal comments
+                    await window.firebaseAuth.sendWithFreshToken('/add/comment', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            postid: post.id,
+                            content: rawContent,
+                            authorId: currentUser.id,
+                            link: null
+                        })
+                    });
+
+                    if (tagUser) {
+                        await window.firebaseAuth.sendWithFreshToken('/user/tag/com', {
                             method: 'POST',
                             body: JSON.stringify({
                                 postid: post.id,
-                                content,
+                                content: rawContent,
+                                tagUser,
                                 authorId: currentUser.id
                             })
                         });
-                        const currentUserProfile = await fetchProfileData(currentUser.id);
-                        const newComment = {
-                            id: response.comment._id,
-                            user: currentUser.user,
-                            photo: currentUserProfile?.photo || 'https://ik.imagekit.io/souravdpal/default-avatar.png',
-                            content,
-                            likes: 0,
-                            likedBy: [],
-                            replyTo: replyMatch ? replyMatch[1] : null,
-                            community: post.community,
-                            createdAt: new Date()
-                        };
-                        post.comments.push(newComment);
-                        post.commentCount++;
-                        commentText.value = '';
-                        renderPosts();
-                        renderMyPosts();
-                        showToast('Comment added!');
-                    } catch (error) {
-                        console.error('Error adding comment:', error.message);
-                        showToast('Failed to add comment.');
-                        if (error.message.includes('Unauthorized')) window.firebaseAuth.logout();
                     }
+
+                    const currentUserProfile = await fetchProfileData(currentUser.id);
+                    post.comments.push({
+                        id: Date.now(),
+                        user: currentUser.user,
+                        photo: currentUserProfile?.photo || 'https://ik.imagekit.io/souravdpal/default-avatar.png',
+                        content: rawContent,
+                        createdAt: new Date()
+                    });
+
+                    post.commentCount++;
+                    commentText.value = '';
+                    renderPosts();
+                    renderMyPosts();
+                    showToast('Comment added!');
+                } catch (error) {
+                    console.error('Error adding comment:', error.message);
+                    showToast('Failed to add comment.');
+                    if (error.message.includes('Unauthorized')) window.firebaseAuth.logout();
                 }
             });
         }
 
-        const shareBtn = postDiv.querySelector('.share-btn');
-        shareBtn.addEventListener('click', () => {
-            const url = `${window.location.origin}/post/share?uid=${currentUser.id}&post=${post.id}`;
-            const shareModal = document.createElement('div');
-            shareModal.className = 'share-modal';
-            shareModal.innerHTML = `
-                <div class="share-modal-content">
-                    <h3 class="text-md font-semibold mb-3 text-gray-200">Share Post</h3>
-                    <button class="share-option text-sm" data-platform="copy">Copy Link</button>
-                    <button class="share-option text-sm" data-platform="twitter">Share on Twitter</button>
-                    <button class="share-option text-sm" data-platform="facebook">Share on Facebook</button>
-                    <button class="close-modal text-sm">Close</button>
-                </div>
-            `;
-            document.body.appendChild(shareModal);
-            shareModal.querySelector('[data-platform="copy"]').addEventListener('click', () => {
-                navigator.clipboard.writeText(url);
-                showToast('Link copied to clipboard!');
-                shareModal.remove();
-            });
-            shareModal.querySelector('[data-platform="twitter"]').addEventListener('click', () => {
-                window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`, '_blank');
-                shareModal.remove();
-            });
-            shareModal.querySelector('[data-platform="facebook"]').addEventListener('click', () => {
-                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-                shareModal.remove();
-            });
-            shareModal.querySelector('.close-modal').addEventListener('click', () => shareModal.remove());
-        });
-
         return postDiv;
     }
-
     // Debounce utility
     function debounce(func, wait) {
         let timeout;
@@ -1181,6 +1126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+
     // Get unread notification count
     async function getUnreadNotificationCount(uid) {
         try {
@@ -1213,6 +1159,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize app
     async function initializeApp() {
         try {
+           
+
             await waitForAuthState();
             if (elements.loader) elements.loader.style.display = 'flex';
             await fetchProfileData(currentUser.id);

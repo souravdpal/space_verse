@@ -60,6 +60,7 @@ router.post('/add/comment', async (req, res) => {
       content,
       community: post.community,
       replyTo: content.match(/^@(\w+)/)?.[1] || null,
+      link :  null ,
     });
 
     await comment.save();
@@ -84,7 +85,7 @@ router.post('/add/comment', async (req, res) => {
 
 // Like a comment
 router.post('/api/comments/:commentId/like', async (req, res) => {
-  const userId = req.headers['x-user-id'];
+  const { userId } = req.query; // or req.user.uid if Firebase middleware populates it
   if (!userId) {
     return res.status(400).json({ error: 'Missing user ID' });
   }
@@ -117,5 +118,6 @@ router.post('/api/comments/:commentId/like', async (req, res) => {
     res.status(500).json({ error: 'Failed to update like' });
   }
 });
+
 
 module.exports = router;

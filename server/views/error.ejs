@@ -5,6 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Error</title>
+  <link rel="stylesheet" href="/css/hina.css">
+        <script src="/js/uuid_gen.js" defer></script>
+
   <style>
     body {
       font-family: 'Arial', sans-serif;
@@ -45,6 +48,21 @@
 </head>
 
 <body>
+
+    <!-- Floating AI Chat -->
+    <div id="ai-chat-btn" title="Ask AI">💬</div>
+    <div id="ai-chat-box">
+      <div id="ai-chat-header">
+        <span>Ask Hina</span>
+        <button id="close-chat">×</button>
+      </div>
+      <div id="ai-chat-messages"></div>
+      <div id="ai-chat-input">
+        <input type="text" id="ai-input" placeholder="Type your question..." />
+        <button id="send-msg">➤</button>
+      </div>
+    </div>
+   
   <div class="error-container">
     <h1>Error</h1>
     <p>
@@ -54,6 +72,7 @@
      <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <script src="/js/firebase.js"></script>
+    <script src="/js/hina.js"></script>
 
 </body>
 

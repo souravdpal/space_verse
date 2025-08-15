@@ -2566,3 +2566,191 @@ main h2.font-orbitron {
     text-align: center;
     color: #f9fafb;
 }
+/* === Comment Section Styles === */
+.comments {
+  margin-top: 8px;
+}
+
+.comment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+.comment-item img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.comment-item strong {
+  color: #fff;
+  font-size: 0.875rem;
+}
+
+.comment-item .text-xs {
+  font-size: 0.75rem;
+}
+
+.comment-item .comment-text {
+  font-size: 0.875rem;
+  color: #d1d5db;
+  word-break: break-word;
+}
+
+.comment-item .tag {
+  color: #3b82f6;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.comment-item .tag:hover {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
+/* Comment form styling */
+.comment-form {
+  margin-top: 10px;
+}
+
+.comment-form textarea {
+  width: 100%;
+  resize: none;
+  font-size: 0.875rem;
+  background-color: #374151;
+  color: #f3f4f6;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+.comment-form textarea::placeholder {
+  color: #9ca3af;
+}
+
+.comment-form button {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  margin-top: 6px;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.comment-form button:hover {
+  background-color: #1d4ed8;
+}
+/* Comment List */
+.comments {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Comment Item */
+.comment-item {
+  background-color: #1f2937; /* dark gray */
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  transition: background 0.2s ease;
+}
+
+.comment-item:hover {
+  background-color: #2d3748;
+}
+
+/* Profile Picture */
+.comment-item img {
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border: 2px solid #374151;
+  box-shadow: 0 0 6px rgba(0,0,0,0.4);
+}
+
+/* Comment Content */
+.comment-item strong {
+  font-size: 14px;
+  color: #f9fafb;
+}
+
+.comment-item span {
+  font-size: 12px;
+}
+
+/* Comment Text */
+.comment-item .text-sm {
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* Tag Highlight (@mention) */
+.tag {
+  color: #3b82f6;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tag:hover {
+  text-decoration: underline;
+}
+
+/* Like Button */
+.comment-like-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: color 0.2s ease;
+}
+
+.comment-like-btn i {
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.comment-like-btn:hover i {
+  transform: scale(1.2);
+}
+
+/* Liked State */
+.comment-like-btn.text-red-500 {
+  color: #ef4444; /* red */
+}
+
+.comment-like-btn.text-gray-400 {
+  color: #9ca3af; /* gray */
+}
+
+/* Reply Button */
+.reply-btn {
+  font-size: 13px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.reply-btn:hover {
+  color: #60a5fa; /* blue */
+}

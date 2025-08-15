@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!charId || !userId) {
         console.warn('Missing user or character ID:', { userId, charId });
         alert('User or character ID missing. Redirecting to home.');
-        setTimeout(() => window.location.href = '/', 1000);
+        setTimeout(() => window.location.href = `/views/u/${window.idget()}`, 1000);
         return;
     }
 

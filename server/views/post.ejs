@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIOVA</title>
+    <link rel="stylesheet" href="/css/hina.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.0/quill.snow.min.css" rel="stylesheet"
         onload="console.log('Quill CSS loaded')" onerror="console.error('Failed to load Quill CSS')">
     <link href="/css/post.css" rel="stylesheet">
@@ -19,6 +20,9 @@
         onload="console.log('Quill JS loaded successfully')"
         onerror="console.error('Failed to load Quill JS')"></script>
     <script src="/js/post.js" defer></script>
+    <script  src="/js/hina.js" defer></script>
+          <script src="/js/uuid_gen.js" defer></script>
+
 </head>
 
 <body class="dark-mode">
@@ -75,7 +79,7 @@
                 <div class="posts">
                     <h2>My Posts</h2>
                     <div id="posts-container" class="loading">
-                        <span class="spinner"></span>
+                        <span id="post" class="spinner"></span>
                     </div>
                 </div>
             </section>
@@ -109,187 +113,7 @@
                 <button id="send-msg">➤</button>
             </div>
         </div>
-        <style>
-            /* Floating Button */
-            #ai-chat-btn {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                width: 58px;
-                height: 58px;
-                background: linear-gradient(135deg, #6366f1, #4f46e5);
-                color: white;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 24px;
-                cursor: pointer;
-                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-                z-index: 9999;
-                transition: transform 0.25s ease, box-shadow 0.25s ease;
-            }
-
-            #ai-chat-btn:hover {
-                transform: scale(1.12);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-            }
-
-            /* Chat Box */
-            #ai-chat-box {
-                position: fixed;
-                bottom: 90px;
-                right: 20px;
-                width: 340px;
-                max-height: 480px;
-                background: var(--bg-color, #ffffff);
-                color: var(--text-color, #111827);
-                border-radius: 14px;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-                display: none;
-                flex-direction: column;
-                overflow: hidden;
-                z-index: 10000;
-                animation: fadeInUp 0.3s ease;
-            }
-
-            /* Smooth fade-in */
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            /* Header */
-            #ai-chat-header {
-                background: linear-gradient(135deg, #6366f1, #4f46e5);
-                color: white;
-                padding: 12px 14px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-weight: 600;
-            }
-
-            #ai-chat-header button {
-                background: rgba(255, 255, 255, 0.15);
-                border: none;
-                border-radius: 50%;
-                width: 28px;
-                height: 28px;
-                color: white;
-                font-size: 18px;
-                cursor: pointer;
-                transition: background 0.2s ease;
-            }
-
-            #ai-chat-header button:hover {
-                background: rgba(255, 255, 255, 0.25);
-            }
-
-            /* Messages */
-            #ai-chat-messages {
-                flex: 1;
-                padding: 12px;
-                overflow-y: auto;
-                font-size: 14px;
-                line-height: 1.4;
-                background: var(--chat-bg, #f9fafb);
-            }
-
-            #ai-chat-messages div {
-                margin-bottom: 8px;
-            }
-
-            #ai-chat-messages strong {
-                color: var(--accent-color, #4f46e5);
-            }
-
-            /* Input */
-            #ai-chat-input {
-                display: flex;
-                border-top: 1px solid #e5e7eb;
-                background: var(--bg-color, #ffffff);
-            }
-
-            #ai-input {
-                flex: 1;
-                padding: 10px;
-                border: none;
-                outline: none;
-                background: transparent;
-                color: inherit;
-            }
-
-            #send-msg {
-                background: #4f46e5;
-                color: white;
-                border: none;
-                padding: 0 16px;
-                cursor: pointer;
-                transition: background 0.2s ease;
-            }
-
-            #send-msg:hover {
-                background: #4338ca;
-            }
-
-            /* Dark mode adjustments */
-            body.dark-mode #ai-chat-box {
-                --bg-color: #1f2937;
-                --text-color: #f9fafb;
-                --chat-bg: #111827;
-            }
-
-            body.dark-mode #ai-chat-messages strong {
-                --accent-color: #a5b4fc;
-            }
-        </style>
-        <script>
-            document.getElementById("ai-chat-btn").addEventListener("click", () => {
-                document.getElementById("ai-chat-box").style.display = "flex";
-            });
-            document.getElementById("close-chat").addEventListener("click", () => {
-                document.getElementById("ai-chat-box").style.display = "none";
-            });
-
-            document.getElementById("send-msg").addEventListener("click", sendMessage);
-            document.getElementById("ai-input").addEventListener("keypress", (e) => {
-                if (e.key === "Enter") sendMessage();
-            });
-
-            function sendMessage() {
-                let input = document.getElementById("ai-input");
-                let msg = input.value.trim();
-                if (!msg) return;
-                appendMessage("You", msg);
-                input.value = "";
-
-                // TODO: Replace with your Groq/OpenAI API endpoint
-                fetch("/api/ask-ai", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ query: msg })
-                })
-                    .then(res => res.json())
-                    .then(data => appendMessage("AI", data.reply))
-                    .catch(() => appendMessage("AI", "Error connecting to AI server."));
-            }
-
-            function appendMessage(sender, text) {
-                let chat = document.getElementById("ai-chat-messages");
-                let msgDiv = document.createElement("div");
-                msgDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
-                chat.appendChild(msgDiv);
-                chat.scrollTop = chat.scrollHeight;
-            }
-        </script>
+     
 
 
         <div id="preview-modal" class="modal" aria-hidden="true">

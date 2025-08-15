@@ -9,6 +9,7 @@
     rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="/css/home.css" />
+  <link rel="stylesheet" href="/css/hina.css">
 </head>
 
 <body class="dark-mode">
@@ -26,7 +27,7 @@
       <h1 class="font-orbitron">Aiova</h1>
       <ul>
         <li>
-          <a href="#" onclick="navigateHome()">
+          <a href="#" id="nav-home">
             <i class="fas fa-home"></i>
             <span>Home</span>
           </a>
@@ -42,18 +43,17 @@
             <li><a href="#" data-filter="coding">Coding</a></li>
             <li><a href="#" data-filter="linux">Linux</a></li>
             <li><a href="#" data-filter="cybersecurity">Cybersecurity</a></li>
-            <li><a href="#" data-filter="plans">Want more?</a></li>
-            <li><a href="#" onclick="navigateCharacters()" data-filter="characters">Characters</a></li>
+            <li><a href="#" data-filter="characters" onclick="navigateCharacters()">Characters</a></li>
           </ul>
         </li>
         <li>
-          <a href="#" onclick="postpop()" id="mobile-create-post">
+          <a href="#" id="mobile-create-post">
             <i class="fas fa-plus-circle"></i>
             <span>Create Post</span>
           </a>
         </li>
         <li>
-          <a href="#" onclick="openNotifications()">
+          <a href="#" id="mobile-notifications">
             <i class="fas fa-bell"></i>
             <span>Notifications</span>
             <span class="notification-counter"><span id="mobile-countNot">0</span></span>
@@ -70,6 +70,7 @@
         <img src="https://via.placeholder.com/32" alt="User Photo" />
         <div class="user-dropdown hidden">
           <button onclick="showLogoutPopup()">Log Out</button>
+          <button onclick="openSettings()">Settings</button>
         </div>
       </div>
     </div>
@@ -86,13 +87,13 @@
     <div class="sidebar-content">
       <ul>
         <li>
-          <a href="#" onclick="navigateHome()" class="tab-btn active" onclick="showSection('all-posts')">
+          <a href="#" id="desktop-home" class="tab-btn active">
             <i class="fas fa-home"></i>
             <span>Home</span>
           </a>
         </li>
         <li>
-          <a href="#" onclick="showSection('my-posts')" class="tab-btn">
+          <a href="#" id="desktop-my-posts" class="tab-btn">
             <i class="fas fa-user"></i>
             <span>My Posts</span>
           </a>
@@ -108,30 +109,30 @@
             <li><a href="#" data-filter="coding">Coding</a></li>
             <li><a href="#" data-filter="linux">Linux</a></li>
             <li><a href="#" data-filter="cybersecurity">Cybersecurity</a></li>
-            <li><a href="#" onclick="navigateCharacters()" data-filter="characters">Characters</a></li>
+            <li><a href="#" data-filter="characters" onclick="navigateCharacters()">Characters</a></li>
           </ul>
         </li>
         <li>
-          <a href="#" onclick="postpop()" id="desktop-create-post">
+          <a href="#" id="desktop-create-post">
             <i class="fas fa-plus-circle"></i>
             <span>Create Post</span>
           </a>
         </li>
         <li>
-          <a href="#" onclick="openNotifications()">
+          <a href="#" id="desktop-notifications">
             <i class="fas fa-bell"></i>
             <span>Notifications</span>
             <span id="desktop-countNot" class="notification-counter">0</span>
           </a>
         </li>
         <li class="premium-item">
-          <a href="#" onclick="plans()">
+          <a href="#" id="desktop-plans">
             <i class="fas fa-gem"></i>
             <span class="label">Unlock Intelligence</span>
           </a>
         </li>
         <li class="premium-char">
-          <a href="#" onclick="plans2()">
+          <a href="#" id="desktop-plans2">
             <i class="fas fa-heart"></i>
             <span class="label">Characters</span>
           </a>
@@ -139,9 +140,10 @@
       </ul>
     </div>
     <div class="user-avatar">
-      <img id="user-photo" src="https://via.placeholder.com/32" alt="User Photo" />
+      <img id="user-photo" src="https://via.placeholder.com/Collection/32" alt="User Photo" />
       <div class="user-dropdown hidden">
         <button onclick="showLogoutPopup()">Log Out</button>
+        <button onclick="openSettings()">Settings</button>
       </div>
     </div>
   </nav>
@@ -163,23 +165,22 @@
     <div class="section" id="notifications">
       <div id="notification-list"></div>
     </div>
-    
-  <!-- Logout Popup -->
-  <div id="logout-popup" class="logout-popup">
-    <div class="logout-popup-content">
-      <p class="logout-message">Are you sure you want to log out?</p>
-      <div class="logout-buttons">
-        <button id="confirm-logout" class="logout-confirm">Yes, Log Out</button>
-        <button id="cancel-logout" class="logout-cancel">Cancel</button>
-      </div>
-    </div>
-  </div>
+  </main>
 
   <!-- Post Creation Popup -->
   <div id="post-popup" class="logout-popup hidden">
     <div class="logout-popup-content">
       <button id="close-post-popup" onclick="closePostPopup()">X</button>
       <div id="post-popup-inner"></div>
+    </div>
+  </div>
+
+  <!-- Logout Popup -->
+  <div id="logout-popup" class="logout-popup hidden">
+    <div class="logout-popup-content">
+      <p>Are you sure you want to log out?</p>
+      <button id="confirm-logout" class="logout-confirm">Yes, Log Out</button>
+      <button id="cancel-logout" class="logout-cancel">Cancel</button>
     </div>
   </div>
 
@@ -196,151 +197,7 @@
       <button id="send-msg">➤</button>
     </div>
   </div>
-  <style>
-    /* Floating Button */
-    #ai-chat-btn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 58px;
-      height: 58px;
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-      z-index: 9999;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-    }
 
-    #ai-chat-btn:hover {
-      transform: scale(1.12);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Chat Box */
-    #ai-chat-box {
-      position: fixed;
-      bottom: 90px;
-      right: 20px;
-      width: 340px;
-      max-height: 480px;
-      background: var(--bg-color, #ffffff);
-      color: var(--text-color, #111827);
-      border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 10000;
-      animation: fadeInUp 0.3s ease;
-    }
-
-    /* Smooth fade-in */
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Header */
-    #ai-chat-header {
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
-      color: white;
-      padding: 12px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 600;
-    }
-
-    #ai-chat-header button {
-      background: rgba(255, 255, 255, 0.15);
-      border: none;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    #ai-chat-header button:hover {
-      background: rgba(255, 255, 255, 0.25);
-    }
-
-    /* Messages */
-    #ai-chat-messages {
-      flex: 1;
-      padding: 12px;
-      overflow-y: auto;
-      font-size: 14px;
-      line-height: 1.4;
-      background: var(--chat-bg, #f9fafb);
-    }
-
-    #ai-chat-messages div {
-      margin-bottom: 8px;
-    }
-
-    #ai-chat-messages strong {
-      color: var(--accent-color, #4f46e5);
-    }
-
-    /* Input */
-    #ai-chat-input {
-      display: flex;
-      border-top: 1px solid #e5e7eb;
-      background: var(--bg-color, #ffffff);
-    }
-
-    #ai-input {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      outline: none;
-      background: transparent;
-      color: inherit;
-    }
-
-    #send-msg {
-      background: #4f46e5;
-      color: white;
-      border: none;
-      padding: 0 16px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    #send-msg:hover {
-      background: #4338ca;
-    }
-
-    /* Dark mode adjustments */
-    body.dark-mode #ai-chat-box {
-      --bg-color: #1f2937;
-      --text-color: #f9fafb;
-      --chat-bg: #111827;
-    }
-
-    body.dark-mode #ai-chat-messages strong {
-      --accent-color: #a5b4fc;
-    }
-
-
-    
-  </style>
   <!-- Login Notification Popup -->
   <div id="login-notification" class="notification-popup">
     <p id="login-notification-message"></p>
@@ -350,91 +207,103 @@
   <!-- Firebase and App Scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
-  <script src="/js/home.js"></script>
   <script src="/js/firebase.js"></script>
-  <script>
-    document.getElementById("ai-chat-btn").addEventListener("click", () => {
-      document.getElementById("ai-chat-box").style.display = "flex";
+  <script src="/js/hina.js"></script>
+  <script src="/js/home.js"></script>
+
+  <!-- Inline Scripts -->
+   <script>
+  // UUID generator
+  function idget() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
     });
-    document.getElementById("close-chat").addEventListener("click", () => {
-      document.getElementById("ai-chat-box").style.display = "none";
+  }
+
+  const reduid = idget();
+  console.log("Generated ID:", reduid);
+
+  // Navigation functions
+  function navigateHome() {
+    window.location.href = `/view/u/${encodeURIComponent(reduid)}`;
+  }
+
+  function navigateCharacters() {
+    window.location.href = `/dis/u/${encodeURIComponent(reduid)}`;
+  }
+
+  function openNotifications() {
+    window.location.href = `/notify/u/${encodeURIComponent(reduid)}`;
+  }
+
+  function plans() {
+    window.location.href = `/plans/?id=${encodeURIComponent(localStorage.getItem('id'))}`;
+  }
+
+  function plans2() {
+    window.location.href = `/dis/u/${encodeURIComponent(reduid)}`;
+  }
+
+  function postpop() {
+    window.location.href = `/post/u/${encodeURIComponent(reduid)}`;
+  }
+
+  function mypost() {
+    window.location.href = `/post/u/${encodeURIComponent(reduid)}#post`;
+  }
+
+  function closePostPopup() {
+    document.getElementById('post-popup').classList.add('hidden');
+  }
+
+  function openSettings() {
+    alert("Settings popup (implement as needed)");
+  }
+
+  function showLogoutPopup() {
+    document.getElementById('logout-popup').classList.remove('hidden');
+  }
+
+  // Attach events after DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    // Desktop
+    document.getElementById("desktop-home").addEventListener("click", e => { e.preventDefault(); navigateHome(); });
+    document.getElementById("desktop-my-posts").addEventListener("click", e => { e.preventDefault(); mypost(); });
+    document.getElementById("desktop-create-post").addEventListener("click", e => { e.preventDefault(); postpop(); });
+    document.getElementById("desktop-notifications").addEventListener("click", e => { e.preventDefault(); openNotifications(); });
+    document.getElementById("desktop-plans").addEventListener("click", e => { e.preventDefault(); plans(); });
+    document.getElementById("desktop-plans2").addEventListener("click", e => { e.preventDefault(); plans2(); });
+
+    // Mobile
+    document.getElementById("nav-home").addEventListener("click", e => { e.preventDefault(); navigateHome(); });
+    document.getElementById("mobile-create-post").addEventListener("click", e => { e.preventDefault(); postpop(); });
+    document.getElementById("mobile-notifications").addEventListener("click", e => { e.preventDefault(); openNotifications(); });
+
+    // Sidebar auto-show on desktop
+    const sidebar = document.querySelector('.sidebar');
+    if (window.innerWidth > 768) {
+      sidebar.classList.remove('hidden');
+      sidebar.style.display = 'flex';
+    }
+
+    // Mobile nav toggle
+    document.getElementById('mobile-nav-toggle').addEventListener('click', () => {
+      const mobileNav = document.getElementById('mobile-nav');
+      mobileNav.classList.remove('hidden');
+      mobileNav.classList.add('open');
     });
-    document.getElementById("send-msg").addEventListener("click", sendMessage);
-    document.getElementById("ai-input").addEventListener("keypress", (e) => {
-      if (e.key === "Enter") sendMessage();
+
+    document.getElementById('mobile-nav-close').addEventListener('click', () => {
+      const mobileNav = document.getElementById('mobile-nav');
+      mobileNav.classList.remove('open');
+      mobileNav.classList.add('hidden');
     });
+  });
+</script>
 
-    function sendMessage() {
-      let input = document.getElementById("ai-input");
-      let msg = input.value.trim();
-      if (!msg) return;
-      appendMessage("You", msg);
-      input.value = "";
-      fetch("/api/ask-ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: msg })
-      })
-        .then(res => res.json())
-        .then(data => appendMessage("AI", data.reply))
-        .catch(() => appendMessage("AI", "Error connecting to AI server."));
-    }
-
-    function appendMessage(sender, text) {
-      let chat = document.getElementById("ai-chat-messages");
-      let msgDiv = document.createElement("div");
-      msgDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
-      chat.appendChild(msgDiv);
-      chat.scrollTop = chat.scrollHeight;
-    }
-
-    currentUser = {
-      id: localStorage.getItem('id')
-    };
-
-    function navigateHome() {
-      const id = currentUser.id;
-      if (id && window.location.pathname !== `/view/u/${id}`) {
-        window.location.href = `/view/u/${encodeURIComponent(id)}`;
-      }
-    }
-
-    function navigateCharacters() {
-      const id = currentUser.id;
-      if (id && window.location.pathname !== `/dis/u/${id}`) {
-        window.location.href = `/dis/u/${encodeURIComponent(id)}`;
-      }
-    }
-
-    function openNotifications() {
-      showSection('notifications');
-    }
-
-    function plans() {
-      const id = currentUser.id;
-      if (id && window.location.pathname !== `/plans/?id=${id}`) {
-        window.location.href = `/plans/?id=${encodeURIComponent(id)}`;
-      }
-    }
-
-    function plans2() {
-      const id = currentUser.id;
-      if (id && window.location.pathname !== `/dis/u/${id}`) {
-        window.location.href = `/dis/u/${encodeURIComponent(id)}`;
-      }
-    }
-
-    function postpop() {
-      const id = currentUser.id;
-      if (id && window.location.pathname !== `/post/u/${id}`) {
-        window.location.href = `/post/u/${encodeURIComponent(id)}`;
-      }
-    }
-
-    function closePostPopup() {
-      document.getElementById('post-popup').classList.add('hidden');
-    }
-  </script>
+ 
 </body>
 
 </html>

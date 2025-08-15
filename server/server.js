@@ -19,6 +19,7 @@ const User = require('./models/User');
 const verifyFirebaseToken = require('./routes/verifyFirebaseToken');
 const Character = require('./models/Character');
 const app = express();
+const hina = require('./routes/hina')
 const postmakerJS = require('./routes/Aipost')
 // Verify environment variables
 /*if (!process.env.IMAGEKIT_PUBLIC_KEY || !process.env.IMAGEKIT_PRIVATE_KEY) {
@@ -274,12 +275,15 @@ app.get('/post/share', async (req, res) => {
     res.status(500).render('error', { data: { error: 'Failed to load shared post' } });
   }
 });
-
+const uuidmaker = require('./routes/uuidMaker')
 // Protected routes with verifyFirebaseToken middleware
 app.use('/', authRoutes);
+app.use('/',uuidmaker)
 app.use('/' ,postmakerJS)
+app.use('/' , verifyFirebaseToken,hina)
 app.use('/notify', verifyFirebaseToken,notifyUser);
 app.use('/', verifyFirebaseToken, imageRoutes);
+app.use('/' ,verifyFirebaseToken ,commentRoutes)
 app.use('/', verifyFirebaseToken, postRoutes);
 app.use('/', verifyFirebaseToken, characterRoutes);
 app.use('/', verifyFirebaseToken, creatorRoutes);

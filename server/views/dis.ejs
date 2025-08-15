@@ -9,6 +9,9 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dis.css">
+    <link rel="stylesheet" href="/css/hina.css">
+      <script src="/js/uuid_gen.js" defer></script>
+
 
 
 </head>
@@ -25,17 +28,18 @@
             <li onclick="ret3()"><a href="/view/u/" class="nav-link" data-target="/view/u/">Home</a></li>
         </ul>
         <script>
+            let uuid = window.idget()
             let ret = () => {
-                window.location.href = `/make/u/${localStorage.getItem('id')}`
+                window.location.href = `/make/u/${uuid}`
             }
             let ret1 = () => {
-                window.location.href = `/dis/u/${localStorage.getItem('id')}`
+                window.location.href = `/dis/u/${uuid}`
             }
             let ret2 = () => {
-                window.location.href = `/post/u/${localStorage.getItem('id')}`
+                window.location.href = `/post/u/${uuid}`
             }
             let ret3 = () => {
-                window.location.href = `/view/u/${localStorage.getItem('id')}`
+                window.location.href = `/view/u/${uuid}`
             }
         </script>
         <div class="navbar-actions">
@@ -45,7 +49,21 @@
             </button>
         </div>
     </nav>
-
+    
+    <!-- Floating AI Chat -->
+    <div id="ai-chat-btn" title="Ask AI">💬</div>
+    <div id="ai-chat-box">
+      <div id="ai-chat-header">
+        <span>Ask Hina</span>
+        <button id="close-chat">×</button>
+      </div>
+      <div id="ai-chat-messages"></div>
+      <div id="ai-chat-input">
+        <input type="text" id="ai-input" placeholder="Type your question..." />
+        <button id="send-msg">➤</button>
+      </div>
+    </div>
+   
     <!-- Main Content -->
     <div class="container">
         <input type="text" id="searchBox" class="search-bar" placeholder="Search by name or tag..."
@@ -71,6 +89,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <script defer src="/js/firebase.js"></script>
     <script src="/js/dis.js"></script>
+    <script src="/js/hina.js"></script>
 </body>
 
 </html>
