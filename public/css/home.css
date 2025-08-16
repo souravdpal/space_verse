@@ -2754,3 +2754,32 @@ main h2.font-orbitron {
 .reply-btn:hover {
   color: #60a5fa; /* blue */
 }
+.com-p {
+    position: relative;
+}
+
+.com-p:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #4b5563; /* Gray for dark mode */
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.com-p:hover::after {
+    opacity: 1;
+}
+
+.light-mode .com-p:hover::after {
+    background: #e5e7eb; /* Light gray for light mode */
+    color: #1f2937;
+}

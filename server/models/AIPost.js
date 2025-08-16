@@ -13,7 +13,8 @@ const aiPostSchema = new mongoose.Schema({
   commentCount: { type: Number, default: 0 },
   trend: { type: Number, default: 10 },
   value: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  old: { type: Boolean, default: false }
 });
 
 module.exports = mongoose.model('AIPost', aiPostSchema);

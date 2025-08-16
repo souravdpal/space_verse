@@ -149,6 +149,50 @@ router.post('/api/char/:charId/like', async (req, res) => {
   }
 });
 
+// Get character by ID or name
+router.get('/c/char/:query', async (req, res) => {
+  const { query } = req.params;
+
+  try {
+    let character;
+
+    if (/^[a-zA-Z0-9_-]+$/.test(query)) {
+      // Try exact match by id first
+      character = await Character.findOne({ id: query });
+    }
+
+    if (!character) {
+      // No ID match → search by name (case-insensitive, most similar first)
+      character = await Character.findOne(
+        { name: { $regex: query, $options: 'i' } }
+      ).sort({ viewCount: -1 }); // Optional: pick most popular match
+    }
+
+    if (!character) {
+      return res.status(404).json({ error: 'Character not found' });
+    }
+
+    // Increment views
+    character.viewCount += 1;
+    await character.save();
+
+    const sendDat = {
+      id: character.id,
+      name: character.name,
+      firstLine: character.firstLine,
+      link: character.link,
+      creator: character.creator,
+      creatorId: character.creatorId,
+    };
+
+    console.log('Character fetched:', sendDat);
+    res.json(sendDat);
+
+  } catch (error) {
+    console.error('Error fetching character:', error.message);
+    res.status(500).json({ error: 'Failed to fetch character', details: error.message });
+  }
+});
 
 
 // Get character like status

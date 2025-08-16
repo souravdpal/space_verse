@@ -35,9 +35,13 @@
             <aside class="sidebar">
                 <nav>
                     <a href="/home"><i class="ri-home-line"></i> Home</a>
-                    <a href="/characters"><i class="ri-user-add-line"></i> Create Characters</a>
+                    <a onclick="redcr()"><i class="ri-user-add-line"></i> Create Characters</a>
                     <a onclick="window.firebaseAuth.logout()"><i class="ri-logout-box-line"></i> Log Out</a>
-                </nav>
+                </nav><script>
+                    let redcr =()=>{
+                        window.location.href=`/make/u/${window.idget()}`
+                    }
+                </script>
             </aside>
             <section class="content">
                 <div class="profile-card">

@@ -255,3 +255,32 @@ body.dark-mode {
   background: var(--accent-color);
   border-radius: 3px;
 }
+/* Loading dots animation */
+#ai-chat-messages .loading::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  animation: blinkDots 1s infinite steps(3, end);
+}
+
+@keyframes blinkDots {
+  0%, 20% { box-shadow: 6px 0 0 var(--accent-color), 12px 0 0 var(--accent-color); }
+  40% { box-shadow: 6px 0 0 var(--chat-bg), 12px 0 0 var(--accent-color); }
+  60% { box-shadow: 6px 0 0 var(--accent-color), 12px 0 0 var(--chat-bg); }
+  80%, 100% { box-shadow: 6px 0 0 var(--accent-color), 12px 0 0 var(--accent-color); }
+}
+
+/* Improve message appearance */
+#ai-chat-messages div {
+  background: linear-gradient(135deg, var(--accent-color)20%, var(--secondary-accent)80%);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  word-wrap: break-word;
+  animation: messageFadeIn 0.3s ease-out;
+}

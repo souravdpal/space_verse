@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         firstLineInput: document.getElementById('first-line'),
         profileName: document.getElementById('profile-name')
     };
-
     // Check for missing elements
     const missingElements = Object.entries(elements)
         .filter(([key, value]) => !value)
@@ -208,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.loaderOverlay.classList.add('active');
 
         try {
-            const charId = `${Date.now().toString()}-${Math.random().toString(36).slice(2, 10)}`;
+            const charId = `${ window.idget()||Date.now().toString()}-${Math.random().toString(36).slice(2, 10)}`;
             const formData = new FormData();
             formData.append('name', elements.nameInput.value.trim());
             formData.append('background', elements.backgroundInput?.value.trim() || '');

@@ -21,6 +21,7 @@ const Character = require('./models/Character');
 const app = express();
 const hina = require('./routes/hina')
 const postmakerJS = require('./routes/Aipost')
+const trendHnadle = require('./routes/trend')
 // Verify environment variables
 /*if (!process.env.IMAGEKIT_PUBLIC_KEY || !process.env.IMAGEKIT_PRIVATE_KEY) {
   console.error('Fatal: Missing ImageKit credentials. Check .env file.');
@@ -229,57 +230,25 @@ app.get('/plans', async (req, res) => {
   }
 });
 
-app.get('/post/share', async (req, res) => {
-  const { uid, post: postId } = req.query;
+app.get('/post/:id', async (req, res) => {
+  const {post: postId } = req.params;
 
-  console.log('Received uid:', uid, 'postId:', postId);
+  try{
+    res.render('home',{data:null})
 
-  if (!uid || !postId) {
-    console.log('❌ Missing parameters');
-    return res.status(400).render('error', { data: { error: 'Missing user ID or post ID' } });
-  }
-
-  try {
-    const post = await Post.findById(postId).lean();
-    console.log('Fetched post:', post);
-
-    if (!post) {
-      console.log('❌ Post not found in DB');
-      return res.status(404).render('error', { data: { error: 'Post not found' } });
-    }
-
-    const author = await User.findOne({ uid: post.authorId }).lean();
-    console.log('Fetched author:', author);
-
-    if (!author) {
-      console.log('❌ Author not found in DB');
-      return res.status(404).render('error', { data: { error: 'Author not found' } });
-    }
-
-    res.render('home', {
-      postShare: true,
-      sender: uid,
-      postid: post._id,
-      authorid: post.authorId,
-      authorname: post.authorName,
-      authorphoto: author.photo || 'https://ik.imagekit.io/souravdpal/default-avatar.png',
-      community: post.community,
-      content: post.content,
-      imagePostLink: post.image || null,
-      likes: post.likeCount,
-      commentcount: post.commentCount,
-      time: post.createdAt,
-    });
+  
   } catch (error) {
     console.error('🔥 Error in /post/share:', error);
     res.status(500).render('error', { data: { error: 'Failed to load shared post' } });
   }
 });
 const uuidmaker = require('./routes/uuidMaker')
+const {runPythonLoop,startLoop,stopLoop}= require('./routes/media')
 // Protected routes with verifyFirebaseToken middleware
+runPythonLoop()
 app.use('/', authRoutes);
 app.use('/',uuidmaker)
-app.use('/' ,postmakerJS)
+app.use('/',trendHnadle)
 app.use('/' , verifyFirebaseToken,hina)
 app.use('/notify', verifyFirebaseToken,notifyUser);
 app.use('/', verifyFirebaseToken, imageRoutes);

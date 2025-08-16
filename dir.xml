@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree>
+  <directory name=".">
+    <file name="directory_structure.xml"></file>
+    <file name="dir.xml"></file>
+    <file name="dockerfile"></file>
+    <directory name="public">
+      <directory name="css">
+        <file name="chat.css"></file>
+        <file name="creator.css"></file>
+        <file name="dis.css"></file>
+        <file name="hina.css"></file>
+        <file name="home.css"></file>
+        <file name="make.css"></file>
+        <file name="not.css"></file>
+        <file name="plans.css"></file>
+        <file name="post.css"></file>
+      </directory>
+      <directory name="js">
+        <file name="chat.js"></file>
+        <file name="creator.js"></file>
+        <file name="dis.js"></file>
+        <file name="firebase.js"></file>
+        <file name="hina.js"></file>
+        <file name="home.js"></file>
+        <file name="make.js"></file>
+        <file name="not.js"></file>
+        <file name="plans.js"></file>
+        <file name="post.js"></file>
+        <file name="routePost.js"></file>
+        <file name="uuid_gen.js"></file>
+        <file name="workingfb.js"></file>
+      </directory>
+      <file name="login.html"></file>
+      <file name="root.html"></file>
+    </directory>
+    <file name="README.md"></file>
+    <directory name="server">
+      <directory name="config">
+        <file name="db.js"></file>
+      </directory>
+      <file name="imagekit.js"></file>
+      <directory name="models">
+        <file name="AIPost.js"></file>
+        <file name="ApiKey.js"></file>
+        <file name="Character.js"></file>
+        <file name="Comment.js"></file>
+        <file name="getnot.js"></file>
+        <file name="Post.js"></file>
+        <file name="User.js"></file>
+      </directory>
+      <file name="package.json"></file>
+      <file name="package-lock.json"></file>
+      <directory name="python">
+        <file name="hina.py"></file>
+        <file name="image-recon.py"></file>
+        <file name="mediaHandler.py"></file>
+        <file name="postMaker.py"></file>
+        <file name="premium.py"></file>
+        <file name="stablediffusion.py"></file>
+        <file name="voice-model.py"></file>
+      </directory>
+      <directory name="routes">
+        <file name="Aipost.js"></file>
+        <file name="apiKey.js"></file>
+        <file name="auth.js"></file>
+        <file name="authJWT.js"></file>
+        <file name="characters.js"></file>
+        <file name="chat.js"></file>
+        <file name="comments.js"></file>
+        <file name="creator.js"></file>
+        <file name="firebaseAdmin.js"></file>
+        <file name="groq.js"></file>
+        <file name="hina.js"></file>
+        <file name="imagekit.js"></file>
+        <file name="imageRoute.js"></file>
+        <file name="migrate-images.js"></file>
+        <file name="notify.js"></file>
+        <file name="posts.js"></file>
+        <file name="routeai.js"></file>
+        <file name="trend.js"></file>
+        <file name="uuidMaker.js"></file>
+        <file name="verifyFirebaseToken.js"></file>
+      </directory>
+      <file name="server.js"></file>
+      <directory name="venv"></directory>
+      <directory name="views">
+        <file name="chat.ejs"></file>
+        <file name="creator.ejs"></file>
+        <file name="dis.ejs"></file>
+        <file name="error.ejs"></file>
+        <file name="home.ejs"></file>
+        <file name="make.ejs"></file>
+        <file name="not.ejs"></file>
+        <file name="plans.ejs"></file>
+        <file name="post.ejs"></file>
+      </directory>
+    </directory>
+  </directory>
+  <report>
+    <directories>11</directories>
+    <files>76</files>
+  </report>
+</tree>

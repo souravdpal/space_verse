@@ -9,7 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
         div.innerHTML = str;
         return div.textContent || div.innerText || '';
     }
-  
+
+    let id = localStorage.getItem('id')
+    //localStorage.clear()
+    localStorage.setItem('id', id)
+
     // Replace placeholder images
     function replacePlaceholderImages(img) {
         if (img.src.includes('via.placeholder.com') || img.src.includes('api.dicebear.com')) {
@@ -122,9 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.firebaseAuth.logout();
                 return null;
             }
-            let urname=response.name
-            localStorage.setItem('username' , urname)
-            
+            let urname = response.name
+            localStorage.setItem('username', urname)
+
             let photoUrl = response.photo || 'https://ik.imagekit.io/souravdpal/default-avatar.png';
             elements.userPhoto.forEach(img => {
                 img.src = photoUrl;
@@ -189,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let photo = post.authorPhoto || 'https://ik.imagekit.io/souravdpal/default-avatar.png';
                 let normalizedCommunity = post.community === 'Characters' ? '@Characters' : post.community;
                 if (!post.authorPhoto) {
-                    if (normalizedCommunity === '@Characters' || normalizedCommunity === '@AICharacters') {
+                    if (normalizedCommunity === '@AICharacters') {
                         const charData = await fetchCharacterData(post.authorId);
                         photo = charData.link;
                     } else {
@@ -274,38 +278,39 @@ document.addEventListener('DOMContentLoaded', () => {
         viewedPosts[postId] = (viewedPosts[postId] || 0) + 1;
         localStorage.setItem('viewedPosts', JSON.stringify(viewedPosts));
     }
-    // Fetch comments for a post
     async function fetchComments(postId) {
         try {
             const comments = await window.firebaseAuth.sendWithFreshToken('/com', {
                 method: 'POST',
                 body: JSON.stringify({ query: postId })
             });
-
             return comments.map(c => ({
                 id: c._id,
                 user: c.authorName,
                 authorId: c.authorId,
-                photo: c.link ? c.link : (c.authorPhoto || 'https://ik.imagekit.io/souravdpal/default-avatar.png'),
+                photo: c.link || 'https://ik.imagekit.io/souravdpal/default-avatar.png',
                 content: c.content,
                 likes: c.likes || 0,
                 likedBy: c.likedBy || [],
-                createdAt: c.createdAt
+                createdAt: c.createdAt,
+                community: c.community // Optional, for debugging
             }));
         } catch (err) {
             console.error('Error fetching comments:', err);
             return [];
         }
     }
-
-
-    // Render posts
     function renderPosts(append = false) {
-        if (!elements.postFeed) return;
+        if (!elements.postFeed) {
+            console.error('post-feed element not found');
+            return;
+        }
         const postsToRender = searchQuery ? filterPosts(filteredPosts, searchQuery) : filteredPosts;
+        console.log('Rendering posts, append:', append, 'postsToRender:', postsToRender);
         if (!append) {
             elements.postFeed.innerHTML = '';
             if (postsToRender.length === 0) {
+                console.log('No posts to render, showing empty state');
                 elements.postFeed.innerHTML = `<div class="empty-state">${searchQuery ? 'No posts match your search.' : 'No posts to show.'}</div>`;
                 return;
             }
@@ -313,6 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fragment = document.createDocumentFragment();
         const postsToDisplay = append ? postsToRender.slice(-POSTS_PER_PAGE) : postsToRender;
         postsToDisplay.forEach(post => {
+            console.log('Creating post element for:', post.id);
             const postElement = createPostElement(post);
             fragment.appendChild(postElement);
             const observer = new IntersectionObserver(entries => {
@@ -330,7 +336,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
     // Render my posts
     function renderMyPosts(append = false) {
         if (!elements.myPostsList) return;
@@ -352,12 +357,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    window.history.replaceState({}, "", `/home/${encodeURI(localStorage.getItem('username'))}`);
+    window.history.replaceState({}, "", `/view/u/${window.idget()}`);
 
-    // Create post element
-    function  createPostElement(post) {
+    function createPostElement(post, isSinglePost = false) {
         const isCurrentUser = currentUser.id === post.authorId;
-        const areCommentsVisible = commentVisibility.get(post.id) || false;
+        const areCommentsVisible = isSinglePost || commentVisibility.get(post.id) || false;
         const postDiv = document.createElement('div');
         postDiv.className = 'post-card';
 
@@ -368,6 +372,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         };
 
+        const isCharacterCommunity = ['@Characters', '@AICharacters'].includes(post.community);
+        const communityContent = isCharacterCommunity
+            ? `<a href="/chat/c/${encodeURIComponent(post.authorId)}" class="com-p text-gray-500 text-xs capitalize bg-gray-700 px-2 py-0.5 rounded-full" data-tooltip="Click to chat with ${sanitizeHTML(post.user)}">${sanitizeHTML(post.community)}</a>`
+            : `<span class="com-p text-gray-500 text-xs capitalize bg-gray-700 px-2 py-0.5 rounded-full">${sanitizeHTML(post.community)}</span>`;
+
         postDiv.innerHTML = `
     <div class="flex items-start gap-4">
         <div class="profile-img">
@@ -376,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="flex-grow">
             <div class="flex items-center gap-2 mb-1">
                 <span class="font-semibold text-blue-600 text-sm">${sanitizeHTML(post.user)}</span>
-                <span class="com-p text-gray-500 text-xs capitalize bg-gray-700 px-2 py-0.5 rounded-full">${sanitizeHTML(post.community)}</span>
+                ${communityContent}
                 <span class="text-gray-400 text-xs">${formatTime(post.createdAt)}</span>
             </div>
             <p class="text-gray-200 text-sm mb-2">${post.content}</p>
@@ -384,11 +393,15 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="flex gap-3 mb-3">
                 <button class="like-btn flex items-center gap-1 text-gray-400 text-sm ${post.likedBy.includes(currentUser.id) ? 'liked' : ''}" data-id="${post.id}" data-community="${post.community}">
                     <i class="fas fa-heart"></i>
-                    <span>${post.likes || 0}</span>
+                    <span id="likes-post">${post.likes || 0}</span>
                 </button>
                 <button class="comment-btn flex items-center gap-1 text-gray-400 text-sm" data-id="${post.id}">
                     <i class="fas fa-comment"></i>
                     <span>${post.commentCount}</span>
+                </button>
+                <button class="share-btn flex items-center gap-1 text-gray-400 text-sm" data-id="${post.id}">
+                    <i class="fas fa-share"></i>
+                    <span>Share</span>
                 </button>
             </div>
             <div class="comment-form ${areCommentsVisible ? '' : 'hidden'}">
@@ -399,50 +412,79 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     </div>
     `;
-        const commentBtn = postDiv.querySelector('.comment-btn');
 
+        // Like button event listener
+        const likeBtn = postDiv.querySelector('.like-btn');
+        likeBtn.addEventListener('click', async () => {
+            if (!currentUser.id) {
+                window.location.href = '/login';
+                return;
+            }
+            try {
+                console.log(`Sending like request for post ${post.id} by user ${currentUser.id}`);
+                const response = await window.firebaseAuth.sendWithFreshToken(
+                    `/api/posts/${post.id}/like/${currentUser.id}`,
+                    { method: 'POST' }
+                );
+                post.likes = response.likeCount;
+                post.likedBy = response.likedBy;
+                likeBtn.classList.toggle('liked', post.likedBy.includes(currentUser.id));
+                likeBtn.querySelector('#likes-post').textContent = post.likes;
+                showToast(response.action === 'liked' ? 'Post liked!' : 'Post unliked!');
+            } catch (error) {
+                console.error('Error liking/unliking post:', error.message);
+                showToast(`Failed to like/unlike post: ${error.message}`);
+            }
+        });
+
+        // Share button event listener
+        const shareBtn = postDiv.querySelector('.share-btn');
+        shareBtn.addEventListener('click', async () => {
+            const postUrl = `http://localhost:3000/post/${post.id}`;
+            try {
+                await navigator.clipboard.writeText(postUrl);
+                showToast('Post URL copied to clipboard!');
+            } catch (error) {
+                console.error('Error copying URL:', error.message);
+                showToast('Failed to copy URL.');
+            }
+        });
+
+        // Comment button event listener
+        const commentBtn = postDiv.querySelector('.comment-btn');
         commentBtn.addEventListener('click', async () => {
             const isVisible = commentVisibility.get(post.id) || false;
 
             if (!isVisible) {
-                // Load comments only when opening
                 post.comments = await fetchComments(post.id);
-
+                console.log('Fetched comments for post', post.id, ':', post.comments);
                 const commentsDiv = postDiv.querySelector('.comments');
                 commentsDiv.innerHTML = post.comments.map(c => `
-                    
-            <div class="comment-item flex items-start gap-3 p-3 border-b border-gray-800 hover:bg-gray-800/40 transition rounded-lg">
-                <img src="${c.photo}" alt="${c.user}" class="w-10 h-10 rounded-full object-cover shadow-md border border-gray-700">
-
-                <div class="flex flex-col flex-grow">
-                    <div class="flex items-center gap-2">
-                        <strong class="text-sm text-white">${sanitizeHTML(c.user)}</strong>
-                        <span class="text-xs text-gray-500">${formatTime(c.createdAt)}</span>
-                    </div>
-
-                    <div class="text-sm text-gray-300 mt-1">
-                        ${highlightTags(sanitizeHTML(c.content))}
-                    </div>
-
-                    <div class="flex items-center gap-4 mt-2">
-                        <button 
-                            class="comment-like-btn flex items-center gap-1 text-sm transition ${c.likedBy.includes(currentUser.id) ? 'text-red-500' : 'text-gray-400'
-                    }" 
-                            data-id="${c.id}">
-                            <i class="fas fa-heart"></i>
-                            <span class="like-count">${c.likes || 0}</span>
-                        </button>
-                        <button class="reply-btn text-gray-400 text-sm hover:text-blue-400 transition">
-                            <i class="fas fa-reply"></i> Reply
-                        </button>
+                <div class="comment-item flex items-start gap-3 p-3 border-b border-gray-800 hover:bg-gray-800/40 transition rounded-lg">
+                    <img src="${c.photo}" alt="${c.user}" class="w-10 h-10 rounded-full object-cover shadow-md border border-gray-700">
+                    <div class="flex flex-col flex-grow">
+                        <div class="flex items-center gap-2">
+                            <strong class="text-sm text-white">${sanitizeHTML(c.user)}</strong>
+                            <span class="text-xs text-gray-500">${formatTime(c.createdAt)}</span>
+                        </div>
+                        <div class="text-sm text-gray-300 mt-1">
+                            ${highlightTags(sanitizeHTML(c.content))}
+                        </div>
+                        <div class="flex items-center gap-4 mt-2">
+                            <button 
+                                class="comment-like-btn flex items-center gap-1 text-sm transition ${c.likedBy.includes(currentUser.id) ? 'text-red-500' : 'text-gray-400'}" 
+                                data-id="${c.id}">
+                                <i class="fas fa-heart"></i>
+                                <span class="like-count">${c.likes || 0}</span>
+                            </button>
+                            <button class="reply-btn text-gray-400 text-sm hover:text-blue-400 transition">
+                                <i class="fas fa-reply"></i> Reply
+                            </button>
+                        </div>
                     </div>
                 </div>
-              
-            </div>
-             
-        `).join('');
+            `).join('');
 
-                // Attach like handlers
                 commentsDiv.querySelectorAll('.comment-like-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const commentId = btn.dataset.id;
@@ -451,7 +493,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 `/api/comments/${commentId}/like?userId=${localStorage.getItem('id')}`,
                                 { method: 'POST' }
                             );
-
                             btn.querySelector('.like-count').textContent = data.likes;
                             if (data.likedBy.includes(currentUser.id)) {
                                 btn.classList.add('text-red-500');
@@ -466,54 +507,86 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 });
-               
-              commentsDiv.querySelectorAll('.tag').forEach (tagEl => {
-                    tagEl.addEventListener('click', () => {
-                        const username = tagEl.dataset.username;
 
-                        window.location.href = `/chat/u/${commentId}`;
+                commentsDiv.querySelectorAll('.tag').forEach(tagEl => {
+                    tagEl.addEventListener('click', async () => {
+                        const username = tagEl.dataset.username;
+                        try {
+                            const userData = await fetchProfileData(username);
+                            if (userData && userData.name) {
+                                window.location.href = `http://localhost:3000/creator/works?creatorId=${encodeURIComponent(username)}&uid=${encodeURIComponent(currentUser.id)}`;
+                                return;
+                            }
+                            const charData = await fetchCharacterData(username);
+                            if (charData && charData.creatorId) {
+                                window.location.href = `http://localhost:3000/creator/works?creatorId=${encodeURIComponent(charData.creatorId)}&uid=${encodeURIComponent(currentUser.id)}`;
+                            } else {
+                                showToast('User or character not found.');
+                            }
+                        } catch (error) {
+                            console.error('Error resolving tagged entity:', error.message);
+                            showToast('Failed to load tagged user or character.');
+                        }
                     });
                 });
             }
 
-            // Toggle visibility
             commentVisibility.set(post.id, !isVisible);
             postDiv.querySelector('.comment-form').classList.toggle('hidden', isVisible);
             postDiv.querySelector('.comments').classList.toggle('hidden', isVisible);
         });
+
+        // Auto-load comments for single-post view
+        if (isSinglePost && !commentVisibility.get(post.id)) {
+            commentBtn.click();
+        }
 
         // Submit comment
         const commentForm = postDiv.querySelector('.comment-form');
         if (commentForm) {
             const commentText = commentForm.querySelector('textarea');
             const submitBtn = commentForm.querySelector('button');
-            submitBtn.addEventListener('click', async () => {
+            const debouncedSubmit = debounce(async () => {
                 if (!currentUser.id) {
                     window.location.href = '/login';
                     return;
                 }
                 const rawContent = commentText.value.trim();
-                if (!rawContent) return;
-
-                const firstTagMatch = rawContent.match(/@([A-Za-z0-9_]+)/);
-                let tagUser = null;
-                if (firstTagMatch) tagUser = firstTagMatch[1].replace(/_/g, ' ');
+                if (!rawContent) {
+                    showToast('Comment cannot be empty.');
+                    return;
+                }
 
                 try {
-                    // Always send link: null for normal comments
-                    await window.firebaseAuth.sendWithFreshToken('/add/comment', {
+                    console.log('Submitting comment for post ID:', post.id, 'with payload:', {
+                        postid: post.id,
+                        content: rawContent,
+                        authorId: currentUser.id
+                    });
+                    const commentResponse = await window.firebaseAuth.sendWithFreshToken('/add/comment', {
                         method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             postid: post.id,
                             content: rawContent,
-                            authorId: currentUser.id,
-                            link: null
+                            authorId: currentUser.id
                         })
                     });
 
+                    const firstTagMatch = rawContent.match(/@([A-Za-z0-9_]+)/);
+                    let tagUser = null;
+                    if (firstTagMatch) tagUser = firstTagMatch[1].replace(/_/g, ' ');
+
                     if (tagUser) {
+                        console.log('Submitting tag notification with payload:', {
+                            postid: post.id,
+                            content: rawContent,
+                            tagUser,
+                            authorId: currentUser.id
+                        });
                         await window.firebaseAuth.sendWithFreshToken('/user/tag/com', {
                             method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 postid: post.id,
                                 content: rawContent,
@@ -521,15 +594,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                 authorId: currentUser.id
                             })
                         });
+                        
                     }
 
-                    const currentUserProfile = await fetchProfileData(currentUser.id);
                     post.comments.push({
-                        id: Date.now(),
-                        user: currentUser.user,
-                        photo: currentUserProfile?.photo || 'https://ik.imagekit.io/souravdpal/default-avatar.png',
+                        id: commentResponse.comment._id || Date.now(), // Use backend comment ID if available
+                        user: commentResponse.comment.authorName || currentUser.user,
+                        photo: commentResponse.comment.link || 'https://ik.imagekit.io/souravdpal/default-avatar.png',
                         content: rawContent,
-                        createdAt: new Date()
+                        createdAt: new Date(commentResponse.comment.createdAt || Date.now()),
+                        likes: 0,
+                        likedBy: []
                     });
 
                     post.commentCount++;
@@ -538,15 +613,69 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderMyPosts();
                     showToast('Comment added!');
                 } catch (error) {
-                    console.error('Error adding comment:', error.message);
-                    showToast('Failed to add comment.');
+                    console.error('Error adding comment for post ID:', post.id, 'Error:', error.message, error);
+                    showToast(`Failed to add comment: ${error.message}`);
                     if (error.message.includes('Unauthorized')) window.firebaseAuth.logout();
                 }
-            });
+            }, 500);
+
+            submitBtn.addEventListener('click', debouncedSubmit);
         }
 
         return postDiv;
     }
+    async function fetchPosts(community = 'all', page = 1) {
+        try {
+            console.log(`Fetching posts for community: ${community}, page: ${page}`);
+            const viewedPostIds = Object.keys(viewedPosts).filter(id => viewedPosts[id] > 0);
+            const response = await window.firebaseAuth.sendWithFreshToken(`/api/posts/priority?limit=${POSTS_PER_PAGE}&page=${page}&community=${encodeURIComponent(community)}`, {
+                method: 'POST',
+                body: JSON.stringify({ userId: currentUser.id, viewedPostIds })
+            });
+            console.log('Posts API response:', response);
+            const posts = await Promise.all(response.map(async post => {
+                let photo = post.authorPhoto || 'https://ik.imagekit.io/souravdpal/default-avatar.png';
+                let normalizedCommunity = post.community === 'Characters' ? '@Characters' : post.community;
+                if (!post.authorPhoto) {
+                    if (normalizedCommunity === '@Characters' || normalizedCommunity === '@AICharacters') {
+                        const charData = await fetchCharacterData(post.authorId);
+                        photo = charData.link || photo;
+                    } else {
+                        const userData = await fetchProfileData(post.authorId);
+                        photo = userData?.photo || photo;
+                    }
+                }
+                return {
+                    id: post._id,
+                    user: post.authorName || 'Unknown',
+                    photo,
+                    authorId: post.authorId,
+                    community: normalizedCommunity,
+                    content: sanitizeHTML(post.content),
+                    image: post.image || null,
+                    likes: post.likeCount || 0,
+                    likedBy: post.likedBy || [],
+                    commentCount: post.commentCount || 0,
+                    comments: [],
+                    createdAt: new Date(post.createdAt),
+                    viewCount: post.viewCount || 0
+                };
+            }));
+            console.log('Processed posts:', posts);
+            if (posts.length > 0) setCachedPosts(posts, community);
+            return posts;
+        } catch (error) {
+            console.error('Error fetching posts:', error.message, error);
+            const cachedPosts = getCachedPosts(community);
+            if (cachedPosts) {
+                console.log('Using cached posts:', cachedPosts);
+                return cachedPosts.map(post => ({ ...post, community: post.community === 'Characters' ? '@Characters' : post.community }));
+            }
+            if (error.message.includes('Unauthorized')) window.firebaseAuth.logout();
+            return [];
+        }
+    }
+
     // Debounce utility
     function debounce(func, wait) {
         let timeout;
@@ -1156,22 +1285,77 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Initialize app
     async function initializeApp() {
         try {
-           
-
+            console.log('Starting app initialization...');
             await waitForAuthState();
+            console.log('Auth state resolved, currentUser:', currentUser);
+            if (!elements.postFeed) {
+                console.error('post-feed element not found');
+                showToast('Failed to render posts: UI error.');
+                return;
+            }
             if (elements.loader) elements.loader.style.display = 'flex';
             await fetchProfileData(currentUser.id);
-            clearCache(currentCommunity);
-            filteredPosts = await fetchPosts();
-            renderPosts();
+            console.log('Profile data fetched for user:', currentUser.id);
+
+            const urlPath = window.location.pathname;
+            console.log('Current URL path:', urlPath);
+            const postIdMatch = urlPath.match(/^\/post\/([a-f0-9]{24})$/);
+            if (postIdMatch) {
+                const postId = postIdMatch[1];
+                console.log('Single post view detected, postId:', postId);
+                try {
+                    const response = await window.firebaseAuth.sendWithFreshToken(`/api/posts/${postId}`);
+                    console.log('Single post response:', response);
+                    if (!response._id) throw new Error('Post not found');
+                    let photo = response.authorPhoto || 'https://ik.imagekit.io/souravdpal/default-avatar.png';
+                    if (!response.authorPhoto && ['@Characters', '@AICharacters'].includes(response.community)) {
+                        const charData = await fetchCharacterData(response.authorId);
+                        console.log('Character data for author:', charData);
+                        photo = charData.link || photo;
+                    } else if (!response.authorPhoto) {
+                        const userData = await fetchProfileData(response.authorId);
+                        console.log('User data for author:', userData);
+                        photo = userData?.photo || photo;
+                    }
+                    const post = {
+                        id: response._id,
+                        user: response.authorName || 'Unknown',
+                        photo,
+                        authorId: response.authorId,
+                        community: response.community === 'Characters' ? '@Characters' : response.community,
+                        content: sanitizeHTML(response.content),
+                        image: response.image || null,
+                        likes: response.likeCount || 0,
+                        likedBy: response.likedBy || [],
+                        commentCount: response.commentCount || 0,
+                        comments: [],
+                        createdAt: new Date(response.createdAt),
+                        viewCount: response.viewCount || 0
+                    };
+                    console.log('Rendering single post:', post);
+                    elements.postFeed.innerHTML = '';
+                    elements.postFeed.appendChild(createPostElement(post, true));
+                    trackPostView(post.id);
+                } catch (error) {
+                    console.error('Error fetching single post:', error.message);
+                    elements.postFeed.innerHTML = '<div class="empty-state">Post not found.</div>';
+                    showToast('Failed to load post.');
+                }
+            } else {
+                console.log('Loading main feed, community:', currentCommunity);
+                filteredPosts = await fetchPosts();
+                console.log('Fetched posts:', filteredPosts);
+                renderPosts();
+            }
+
             updateNotificationCount();
             const count = await getUnreadNotificationCount(currentUser.id);
+            console.log('Unread notification count:', count);
             if (count > 0) showLoginNotification(count);
         } catch (error) {
-            console.error('Error initializing app:', error.message);
+            console.error('Error initializing app:', error.message, error);
             showToast('Failed to initialize app. Please try again.');
             if (error.message.includes('Unauthorized')) window.firebaseAuth.logout();
         } finally {
@@ -1179,5 +1363,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    initializeApp();
+    initializeApp()
 });
